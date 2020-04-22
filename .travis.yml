@@ -204,6 +204,10 @@ script:
 
 after_failure:
    - echo $TRAVIS_TEST_RESULT 
+   - cd $TRAVIS_BUILD_DIR/build
+   - tar -zcvf reports.tar.gz ./reports
+   - mkdir -p $TRAVIS_BUILD_DIR/build/artefacts_upload
+   - mv reports.tar.gz $TRAVIS_BUILD_DIR/build/artefacts_upload
 
 before_deploy:
    - |
@@ -228,8 +232,8 @@ deploy:
   skip_cleanup: true
   on:
     repo: nest/nest-simulator
-    branch: master
-    condition: xRUN_BUILD_AND_TESTSUITE = 1
+    branch: failure_check
+    condition: xRUN_BUILD_AND_TESTSUITE = 1 && $TRAVIS_TEST_RESULT = 1
   local-dir: "$TRAVIS_BUILD_DIR/build/artefacts_upload"
   upload-dir: "$TRAVIS_REPO_SLUG/$TRAVIS_BUILD_NUMBER/$TRAVIS_JOB_NUMBER"
   acl: bucket_owner_full_control
