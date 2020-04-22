@@ -71,6 +71,11 @@ jobs:
 
 #https://docs.travis-ci.com/user/installing-dependencies#Installing-Packages-with-the-APT-Addon
 addons:
+   artifacts: true
+     paths:
+     - $(git ls-files -o | tr "\n" ":")
+     - $(ls /var/log/*.log | tr "\n" ":")
+     - $TRAVIS_BUILD_DIR/build/artefacts_upload
    apt:
     sources:
      - r-packages-trusty
