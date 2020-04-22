@@ -202,6 +202,9 @@ script:
         python extras/parse_travis_log.py travis_build.sh.log ;
      fi
 
+after_failure:
+   - echo $TRAVIS_TEST_RESULT 
+
 before_deploy:
    - |
      if [ "$xRUN_BUILD_AND_TESTSUITE" = "1" ]; then
