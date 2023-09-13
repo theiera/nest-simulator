@@ -629,6 +629,33 @@ extern const Name y_1;
 extern const Name z;
 extern const Name z_connected;
 
+// Migliore-Morasco-Solinas model
+extern const Name Iadap_start;
+extern const Name Vres;
+extern const Name Vtm;
+extern const Name Cm;
+extern const Name I_th;
+extern const Name tao_m;
+extern const Name sc;
+extern const Name bet;
+extern const Name delta1;
+extern const Name cost_idep_ini;
+extern const Name Idep_ini_vr;
+extern const Name psi1;
+extern const Name alp;
+extern const Name istim_min_spikinig_exp;
+extern const Name istim_max_spikinig_exp;
+extern const Name corrcostatratti;
+extern const Name corrcost;
+extern const Name corrsin1;
+extern const Name corrsin2;
+extern const Name corrsin2;
+extern const Name init_sign;
+extern const Name sis;
+extern const Name Iadap_ini;
+extern const Name Idep_ini;
+
+ 
 } // namespace names
 
 } // namespace nest

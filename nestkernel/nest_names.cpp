@@ -604,6 +604,32 @@ const Name y_1( "y_1" );
 const Name z( "z" );
 const Name z_connected( "z_connected" );
 
+// Migliore-Morasco-Solinas model
+const Name Vres( "Vres" );
+const Name Vtm( "Vtm" );
+const Name Cm( "Cm" );
+const Name I_th( "I_th" );
+const Name tao_m( "tao_m" );
+const Name sc( "sc" );
+const Name bet( "bet" );
+const Name delta1( "delta1" );
+const Name cost_idep_ini( "cost_idep_ini" );
+const Name Idep_ini_vr( "Idep_ini_vr" );
+const Name psi1( "psi1" );
+const Name alp( "alp" );
+const Name istim_min_spikinig_exp( "istim_min_spikinig_exp" );
+const Name istim_max_spikinig_exp( "istim_max_spikinig_exp" );
+const Name corrcostatratti( "corrcostatratti" );
+const Name corrcost( "corrcost" );
+const Name corrsin1( "corrsin1" );
+const Name corrsin2( "corrsin2" );
+const Name init_sign( "init_sign" );
+const Name Iadap_start( "Iadap_start" );
+const Name Iadap_ini( "Iadap_ini" );
+const Name Idep_ini( "Idep_ini" );
+const Name sis( "sis" );
+
+  
 } // namespace names
 
 } // namespace nest
