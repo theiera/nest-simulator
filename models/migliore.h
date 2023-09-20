@@ -212,6 +212,7 @@ private:
     double istim_min_spikinig_exp_;
     double istim_max_spikinig_exp_;
     double tau_syn_NMDA_;
+    double NMDA_ratio_;
     //double Delta_T; //!< Slope factor in ms
 
     /** External DC current */

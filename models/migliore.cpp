@@ -180,6 +180,7 @@ namespace nest
     def< double >( d, names::istim_min_spikinig_exp, istim_min_spikinig_exp_);
     def< double >( d, names::istim_max_spikinig_exp, istim_max_spikinig_exp_);
     def< double >( d, names::tau_syn_NMDA, tau_syn_NMDA_);
+    def< double >( d, names::NMDA_ratio, NMDA_ratio_);
     def< double >( d, names::t_ref, t_ref_ );
     def< int >( d, names::n_synapses, n_receptors_() );
     def< bool >( d, names::has_connections, has_connections_ );
@@ -214,6 +215,7 @@ namespace nest
     updateValueParam< double >( d, names::istim_min_spikinig_exp, istim_min_spikinig_exp_, node );
     updateValueParam< double >( d, names::istim_max_spikinig_exp, istim_max_spikinig_exp_, node );
     updateValueParam< double >( d, names::tau_syn_NMDA, tau_syn_NMDA_, node );
+    updateValueParam< double >( d, names::NMDA_ratio, NMDA_ratio_, node );
     updateValueParam< double >( d, names::t_ref, t_ref_, node );
     if ( t_ref_ < 0 )
       {
@@ -614,8 +616,8 @@ namespace nest
 			  S_.i_syn_fast_[ i ] += input_spike; // not sure about this
 			  if ( i == 0 )
 			    {
-			      S_.i_syn_slow_[ i ] += input_spike; // not sure about this
-			      if (input_spike < 0) {std::cout << "###############\n";}
+			      S_.i_syn_slow_[ i ] += input_spike * P_.NMDA_ratio_; // not sure about this
+			      if (input_spike > 0) {std::cout << input_spike * P_.NMDA_ratio_ << " ###############\n";}
 			      std::cout << "I NMDA " << i << " " << S_.i_syn_slow_[ i ] << "\n";
 			    }
 			  S_.i_syn_[ i ] = S_.i_syn_fast_[ i ] + S_.i_syn_slow_[ i ];
