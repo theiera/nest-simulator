@@ -146,6 +146,8 @@ namespace nest
   	, current_ ( 0.0 )
   {
     i_syn_.clear();
+    i_syn_fast_.clear();
+    i_syn_slow_.clear();
   }
 
   /* ----------------------------------------------------------------
@@ -177,7 +179,7 @@ namespace nest
     def< double >( d, names::Iadap_start, Iadap_start_);
     def< double >( d, names::istim_min_spikinig_exp, istim_min_spikinig_exp_);
     def< double >( d, names::istim_max_spikinig_exp, istim_max_spikinig_exp_);
-    //def< double >( d, names::Delta_T, Delta_T );
+    def< double >( d, names::tau_syn_NMDA, tau_syn_NMDA_);
     def< double >( d, names::t_ref, t_ref_ );
     def< int >( d, names::n_synapses, n_receptors_() );
     def< bool >( d, names::has_connections, has_connections_ );
@@ -211,12 +213,8 @@ namespace nest
     updateValueParam< double >( d, names::Iadap_start, Iadap_start_, node );
     updateValueParam< double >( d, names::istim_min_spikinig_exp, istim_min_spikinig_exp_, node );
     updateValueParam< double >( d, names::istim_max_spikinig_exp, istim_max_spikinig_exp_, node );
-    //updateValueParam< double >( d, names::Delta_T, Delta_T, node );
+    updateValueParam< double >( d, names::tau_syn_NMDA, tau_syn_NMDA_, node );
     updateValueParam< double >( d, names::t_ref, t_ref_, node );
-    // updateValueParam< double >( d, names::miglp1, miglp1_, node );
-    // updateValueParam< double >( d, names::miglp2, miglp2_, node );
-    // updateValueParam< double >( d, names::miglp3, miglp3_, node );
-    // updateValueParam< double >( d, names::miglp4, miglp4_, node );
     if ( t_ref_ < 0 )
       {
     	throw BadProperty( "Refractory time must not be negative." );
@@ -334,10 +332,13 @@ namespace nest
 
     const double h = Time::get_resolution().get_ms();
 
-    V_.P11_syn_.resize( P_.n_receptors_() );
+    V_.P11_syn_fast_.resize( P_.n_receptors_() );
+    V_.P11_syn_slow_.resize( P_.n_receptors_() );
     // V_.P21_syn_.resize( P_.n_receptors_() );
 
     S_.i_syn_.resize( P_.n_receptors_() );
+    S_.i_syn_fast_.resize( P_.n_receptors_() );
+    S_.i_syn_slow_.resize( P_.n_receptors_() );
 
     B_.spikes_.resize( P_.n_receptors_() );
 
@@ -349,7 +350,16 @@ namespace nest
 
     for ( size_t i = 0; i < P_.n_receptors_(); i++ )
       {
-		V_.P11_syn_[ i ] = std::exp( -h / P_.tau_syn_[ i ] );
+		V_.P11_syn_fast_[ i ] = std::exp( -h / P_.tau_syn_[ i ] );
+		if (i == 0)
+		  {
+		    V_.P11_syn_slow_[ i ] = std::exp( -h / P_.tau_syn_NMDA_ );
+		    std::cout << "Set NMDA " << i << " " << V_.P11_syn_slow_[ i ];
+		  }
+		else
+		  {
+		    V_.P11_syn_slow_[ i ] = 0;
+		  }
 		// these are determined according to a numeric stability criterion
 		// V_.P21_syn_[ i ] = propagator_32( P_.tau_syn_[ i ], P_.tao_m_, P_.Cm_, h );
 		B_.spikes_[ i ].resize();
@@ -579,7 +589,8 @@ namespace nest
 	  double timer = origin.get_ms() ;
 	  double current;
 	  double vmss, timess;
-
+	  double input_spike;
+	  
 	  // evolve from timestep 'from' to timestep 'to' with steps of h each
 	  for ( long lag = from; lag < to; ++lag )
 	  {
@@ -596,9 +607,19 @@ namespace nest
 		  for ( size_t i = 0; i < P_.n_receptors_(); i++ )
 		  {
 			  // exponential decaying PSCs
-			  S_.i_syn_[ i ] *= V_.P11_syn_[ i ];
+			  S_.i_syn_fast_[ i ] *= V_.P11_syn_fast_[ i ];
+			  S_.i_syn_slow_[ i ] *= V_.P11_syn_slow_[ i ];
 			  // collect spikes
-			  S_.i_syn_[ i ] += B_.spikes_[ i ].get_value( lag ); // not sure about this
+			  input_spike = B_.spikes_[ i ].get_value( lag );
+			  S_.i_syn_fast_[ i ] += input_spike; // not sure about this
+			  if ( i == 0 )
+			    {
+			      S_.i_syn_slow_[ i ] += input_spike; // not sure about this
+			      if (input_spike < 0) {std::cout << "###############\n";}
+			      std::cout << "I NMDA " << i << " " << S_.i_syn_slow_[ i ] << "\n";
+			    }
+			  S_.i_syn_[ i ] = S_.i_syn_fast_[ i ] + S_.i_syn_slow_[ i ];
+
 		  }
 		  current = S_.current_;
 		  vmss = S_.V_m_;

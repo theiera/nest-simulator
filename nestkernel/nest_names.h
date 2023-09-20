@@ -645,6 +645,7 @@ extern const Name psi1;
 extern const Name alp;
 extern const Name istim_min_spikinig_exp;
 extern const Name istim_max_spikinig_exp;
+extern const Name tau_syn_NMDA;
 extern const Name corrcostatratti;
 extern const Name corrcost;
 extern const Name corrsin1;

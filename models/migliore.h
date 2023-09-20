@@ -211,6 +211,7 @@ private:
     double Iadap_start_;
     double istim_min_spikinig_exp_;
     double istim_max_spikinig_exp_;
+    double tau_syn_NMDA_;
     //double Delta_T; //!< Slope factor in ms
 
     /** External DC current */
@@ -262,6 +263,8 @@ private:
     static const size_t NUM_STATE_ELEMENTS_PER_RECEPTOR = 1;     // I_SYN
 
     std::vector< double > i_syn_;
+    std::vector< double > i_syn_fast_;
+    std::vector< double > i_syn_slow_;
     /** Accumulate spikes arriving during refractory period, discounted for
         decay until end of refractory period.
     */
@@ -303,7 +306,8 @@ private:
   {
 
     // time evolution operator
-    std::vector< double > P11_syn_;
+    std::vector< double > P11_syn_fast_;
+    std::vector< double > P11_syn_slow_;
 //    std::vector< double > P21_syn_;
 //    double P20_;
 //    double P22_;

@@ -619,6 +619,7 @@ const Name psi1( "psi1" );
 const Name alp( "alp" );
 const Name istim_min_spikinig_exp( "istim_min_spikinig_exp" );
 const Name istim_max_spikinig_exp( "istim_max_spikinig_exp" );
+const Name tau_syn_NMDA( "tau_syn_NMDA" );
 const Name corrcostatratti( "corrcostatratti" );
 const Name corrcost( "corrcost" );
 const Name corrsin1( "corrsin1" );
