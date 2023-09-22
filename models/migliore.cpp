@@ -616,7 +616,6 @@ namespace nest
 			  if ( i == 0 )
 			    {
 			      S_.i_syn_slow_[ i ] += input_spike * P_.NMDA_ratio_; // not sure about this
-			      if (input_spike > 0) {std::cout << input_spike * P_.NMDA_ratio_ << " ###############\n";}
 			    }
 			  S_.i_syn_[ i ] = S_.i_syn_fast_[ i ] + S_.i_syn_slow_[ i ];
 
