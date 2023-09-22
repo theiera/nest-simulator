@@ -365,7 +365,6 @@ SonataConnector::sequential_chunkwise_connector_()
   hsize_t offset = 0; // start coordinates of data selection
   for ( long long i = 0; i < dv.quot; i++ )
   {
-    std::cout << "Connecting chuck: " << i << " of " << dv.quot << "\n";
     connect_chunk_( hyperslab_size_, offset );
     offset += hyperslab_size_;
   }

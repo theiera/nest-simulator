@@ -356,7 +356,6 @@ namespace nest
 		if (i == 0)
 		  {
 		    V_.P11_syn_slow_[ i ] = std::exp( -h / P_.tau_syn_NMDA_ );
-		    std::cout << "Set NMDA " << i << " " << V_.P11_syn_slow_[ i ];
 		  }
 		else
 		  {
@@ -618,7 +617,6 @@ namespace nest
 			    {
 			      S_.i_syn_slow_[ i ] += input_spike * P_.NMDA_ratio_; // not sure about this
 			      if (input_spike > 0) {std::cout << input_spike * P_.NMDA_ratio_ << " ###############\n";}
-			      std::cout << "I NMDA " << i << " " << S_.i_syn_slow_[ i ] << "\n";
 			    }
 			  S_.i_syn_[ i ] = S_.i_syn_fast_[ i ] + S_.i_syn_slow_[ i ];
 
