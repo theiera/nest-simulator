@@ -173,6 +173,7 @@ private:
   double Idep(double, double, double, double, int);
   double exp_cum(double, double, double);
   double monod(double, double, double, double, double);
+  double mgblock(double);
   
   void update( const Time&, const long, const long ) override;
 
@@ -213,8 +214,9 @@ private:
     double istim_max_spikinig_exp_;
     double tau_syn_NMDA_;
     double NMDA_ratio_;
-    //double Delta_T; //!< Slope factor in ms
-
+    double mg_;
+    double mg_ref_;
+    double mgb_k_;
     /** External DC current */
     double I_e_;
 

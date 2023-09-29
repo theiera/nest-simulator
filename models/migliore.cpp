@@ -127,11 +127,13 @@ namespace nest
     , Iadap_start_ ( 0.0 )
     , istim_min_spikinig_exp_( 400 )
     , istim_max_spikinig_exp_( 1000 )
-    //, Delta_T( 2.0 ) // mV
     , I_e_( 0.0 ) // pA
     , t_ref_( 2.0 ) // in ms
     , tau_syn_( 3.0, 2.0 )  // in ms
     , has_connections_( false )
+    , mg_( 2.0) // 2 mM in the Johnston et al. 2010, extracellula [MgCl2] = 1 mM in Edelman et al. 2015
+    , mgb_k_ ( 0.062 ) // (/mV) Johnston et al. 2010
+    , mg_ref_ ( 3.57 ) // (mM) Johnston et al. 2010
   {
   }
 
@@ -182,6 +184,9 @@ namespace nest
     def< double >( d, names::tau_syn_NMDA, tau_syn_NMDA_);
     def< double >( d, names::NMDA_ratio, NMDA_ratio_);
     def< double >( d, names::t_ref, t_ref_ );
+    def< double >( d, names::mg, mg_ );
+    def< double >( d, names::mg_ref, mg_ref_ );
+    def< double >( d, names::mgb_k, mgb_k_ );
     def< int >( d, names::n_synapses, n_receptors_() );
     def< bool >( d, names::has_connections, has_connections_ );
 
@@ -217,6 +222,9 @@ namespace nest
     updateValueParam< double >( d, names::tau_syn_NMDA, tau_syn_NMDA_, node );
     updateValueParam< double >( d, names::NMDA_ratio, NMDA_ratio_, node );
     updateValueParam< double >( d, names::t_ref, t_ref_, node );
+    updateValueParam< double >( d, names::mg, mg_, node );
+    updateValueParam< double >( d, names::mg_ref, mg_ref_, node );
+    updateValueParam< double >( d, names::mgb_k, mgb_k_, node );
     if ( t_ref_ < 0 )
       {
     	throw BadProperty( "Refractory time must not be negative." );
@@ -566,6 +574,12 @@ namespace nest
     return to_return;
   }
 
+  double
+  migliore::mgblock(double v)
+  {
+    return 1 / (1 + exp(P_.mgb_k_ * -v) * (P_.mg_ / P_.mg_ref_));
+  }
+  
   void
   migliore::update( Time const& origin, const long from, const long to )
   {
@@ -615,8 +629,9 @@ namespace nest
 			  S_.i_syn_fast_[ i ] += input_spike; // not sure about this
 			  if ( i == 0 )
 			    {
-			      S_.i_syn_slow_[ i ] += input_spike * P_.NMDA_ratio_; // not sure about this
+			      S_.i_syn_slow_[ i ] += input_spike * P_.NMDA_ratio_ * mgblock(S_.V_m_); // not sure about this
 			    }
+			  std::cout <<  S_.V_m_ << "\t" << mgblock(S_.V_m_) << "\n";
 			  S_.i_syn_[ i ] = S_.i_syn_fast_[ i ] + S_.i_syn_slow_[ i ];
 
 		  }

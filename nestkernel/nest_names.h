@@ -656,8 +656,9 @@ extern const Name init_sign;
 extern const Name sis;
 extern const Name Iadap_ini;
 extern const Name Idep_ini;
-
- 
+extern const Name mg;
+extern const Name mg_ref;
+extern const Name mgb_k;
 } // namespace names
 
 } // namespace nest

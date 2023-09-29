@@ -630,6 +630,9 @@ const Name Iadap_start( "Iadap_start" );
 const Name Iadap_ini( "Iadap_ini" );
 const Name Idep_ini( "Idep_ini" );
 const Name sis( "sis" );
+const Name mg( "mg" );
+const Name mg_ref( "mg_ref" );
+const Name mgb_k( "mgb_k" );
 
   
 } // namespace names
