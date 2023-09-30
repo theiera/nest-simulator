@@ -217,6 +217,7 @@ private:
     double mg_;
     double mg_ref_;
     double mgb_k_;
+    double mgb_shift_;
     /** External DC current */
     double I_e_;
 

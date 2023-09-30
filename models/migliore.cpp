@@ -134,6 +134,7 @@ namespace nest
     , mg_( 2.0) // 2 mM in the Johnston et al. 2010, extracellula [MgCl2] = 1 mM in Edelman et al. 2015
     , mgb_k_ ( 0.062 ) // (/mV) Johnston et al. 2010
     , mg_ref_ ( 3.57 ) // (mM) Johnston et al. 2010
+    , mgb_shift_ ( 0.0 ) // (mM) Johnston et al. 2010
   {
   }
 
@@ -187,6 +188,7 @@ namespace nest
     def< double >( d, names::mg, mg_ );
     def< double >( d, names::mg_ref, mg_ref_ );
     def< double >( d, names::mgb_k, mgb_k_ );
+    def< double >( d, names::mgb_shift, mgb_shift_ );
     def< int >( d, names::n_synapses, n_receptors_() );
     def< bool >( d, names::has_connections, has_connections_ );
 
@@ -225,6 +227,7 @@ namespace nest
     updateValueParam< double >( d, names::mg, mg_, node );
     updateValueParam< double >( d, names::mg_ref, mg_ref_, node );
     updateValueParam< double >( d, names::mgb_k, mgb_k_, node );
+    updateValueParam< double >( d, names::mgb_shift, mgb_shift_, node );
     if ( t_ref_ < 0 )
       {
     	throw BadProperty( "Refractory time must not be negative." );
@@ -577,7 +580,7 @@ namespace nest
   double
   migliore::mgblock(double v)
   {
-    return 1 / (1 + exp(P_.mgb_k_ * -v) * (P_.mg_ / P_.mg_ref_));
+    return 1 / (1 + exp(P_.mgb_k_ * -(v - P_.mgb_shift_)) * (P_.mg_ / P_.mg_ref_));
   }
   
   void
@@ -631,7 +634,6 @@ namespace nest
 			    {
 			      S_.i_syn_slow_[ i ] += input_spike * P_.NMDA_ratio_ * mgblock(S_.V_m_); // not sure about this
 			    }
-			  std::cout <<  S_.V_m_ << "\t" << mgblock(S_.V_m_) << "\n";
 			  S_.i_syn_[ i ] = S_.i_syn_fast_[ i ] + S_.i_syn_slow_[ i ];
 
 		  }

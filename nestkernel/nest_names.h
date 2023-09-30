@@ -659,6 +659,7 @@ extern const Name Idep_ini;
 extern const Name mg;
 extern const Name mg_ref;
 extern const Name mgb_k;
+extern const Name mgb_shift;
 } // namespace names
 
 } // namespace nest

@@ -633,6 +633,7 @@ const Name sis( "sis" );
 const Name mg( "mg" );
 const Name mg_ref( "mg_ref" );
 const Name mgb_k( "mgb_k" );
+const Name mgb_shift( "mgb_shift" );
 
   
 } // namespace names
