@@ -320,7 +320,7 @@ private:
 
     unsigned int receptor_types_size_;
 
-    double time_scale, d_dt, dt, beta2, t_step;
+    double time_scale_, d_dt, dt, beta2, t_step;
     double mincurr, V_star_min_, alpha_neg_;
     double H, Vconvfact, vrm, psi1;
     double t_spk;

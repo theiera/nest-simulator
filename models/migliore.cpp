@@ -146,7 +146,7 @@ namespace nest
     , sis_( 0.0 ) // membrane dependent variable
     , I_inj_( 0.0 )         // input current
     , r_ref_( 0.0 )
-  	, current_ ( 0.0 )
+    , current_ ( 0.0 )
   {
     i_syn_.clear();
     i_syn_fast_.clear();
@@ -381,9 +381,9 @@ namespace nest
     // since t_ref_ >= 0, this can only fail in error
     assert( V_.RefractoryCounts_ >= 0 );
 
-    V_.time_scale = 1 / (-P_.sc_ / (P_.Cm_ * P_.E_L_));
+    V_.time_scale_ = 1 / (-P_.sc_ / (P_.Cm_ * P_.E_L_));
     V_.d_dt = h;
-    V_.dt = V_.d_dt/V_.time_scale;
+    V_.dt = V_.d_dt/V_.time_scale_;
     V_.t_spk = -3 * V_.d_dt;
 
     V_.beta2 = pow(P_.bet_,2);
@@ -589,24 +589,21 @@ namespace nest
     //assert( to >= 0 && ( delay ) from < kernel().connection_manager.get_min_delay() );
 	  assert( from < to );
 
-	  double t0_val = origin.get_ms() / V_.time_scale;
+	  double t0_val = origin.get_ms() / V_.time_scale_;
 	  double local_time_step = V_.dt;// / (to - 1);
 	  double t_final = t0_val + local_time_step;
 
-	  // double afirst = 0;
-	  //	  double meancorlastis = 0;
-	  //	  double stdcorlastis = 0;
-	  //	  double meancorlastprec = 0;
-	  //	  double stdcorlastprec = 0;
+	  
 	  double v_ini = S_.V_m_ / V_.Vconvfact;
 	  double vini_prec = v_ini;
 	  double teta;
 	  double c_aux;
-	  double currCoeff;
-	  int counter = S_.sis_;
-	  double timer = origin.get_ms() ;
-	  double current;
-	  double vmss, timess;
+	  // double currCoeff;
+	  // int counter = S_.sis_;
+	  // double timer = origin.get_ms() ;
+	  // double current;
+	  // double vmss, timess;
+	  double paramL_;
 	  double input_spike;
 	  
 	  // evolve from timestep 'from' to timestep 'to' with steps of h each
@@ -617,41 +614,44 @@ namespace nest
 		  S_.I_inj_ = B_.currents_.get_value( lag );
 		  S_.current_ = S_.I_inj_; // + S_.I;
 		  // Update synaptic currents
-		  for ( size_t i = 0; i < P_.n_receptors_(); i++ )
-		  {
+		  if ( S_.r_ref_ == 0 )
+		    {
+		      // neuron not refractory, so evolve add synaptic currents
+		      for ( size_t i = 0; i < P_.n_receptors_(); i++ )
+			{
 			  // S_.V_m_ += V_.P21_syn_[ i ] * S_.i_syn_[ i ];
 			  S_.current_ += S_.i_syn_[ i ];
-		  }
+			}
+		    }
 		  for ( size_t i = 0; i < P_.n_receptors_(); i++ )
-		  {
-			  // exponential decaying PSCs
-			  S_.i_syn_fast_[ i ] *= V_.P11_syn_fast_[ i ];
-			  S_.i_syn_slow_[ i ] *= V_.P11_syn_slow_[ i ];
-			  // collect spikes
-			  input_spike = B_.spikes_[ i ].get_value( lag );
-			  S_.i_syn_fast_[ i ] += input_spike; // not sure about this
-			  if ( i == 0 )
-			    {
-			      S_.i_syn_slow_[ i ] += input_spike * P_.NMDA_ratio_ * mgblock(S_.V_m_); // not sure about this
-			    }
-			  S_.i_syn_[ i ] = S_.i_syn_fast_[ i ] + S_.i_syn_slow_[ i ];
-
-		  }
-		  current = S_.current_;
-		  vmss = S_.V_m_;
-		  timess = t_final * V_.time_scale;
+		    {
+		      // exponential decaying PSCs
+		      S_.i_syn_fast_[ i ] *= V_.P11_syn_fast_[ i ];
+		      S_.i_syn_slow_[ i ] *= V_.P11_syn_slow_[ i ];
+		      // collect spikes
+		      input_spike = B_.spikes_[ i ].get_value( lag );
+		      S_.i_syn_fast_[ i ] += input_spike; // not sure about this
+		      if ( i == 0 )
+			{
+			  S_.i_syn_slow_[ i ] += input_spike * P_.NMDA_ratio_ * mgblock(S_.V_m_); // not sure about this
+			}
+		      S_.i_syn_[ i ] = S_.i_syn_fast_[ i ] + S_.i_syn_slow_[ i ];
+		    }
+		  // current = S_.current_;
+		  // vmss = S_.V_m_;
+		  // timess = t_final * V_.time_scale_;
 		  t0_val = t_final;
 		  t_final = t0_val + local_time_step ;//Time::step( origin.get_steps() + lag + 1 );
-		  if ((t_final-S_.init_sign_)*V_.time_scale >= nest::migliore::tagliorette(S_.current_))
+		  if ((t_final-S_.init_sign_)*V_.time_scale_ >= nest::migliore::tagliorette(S_.current_))
 		  {
-		    if (S_.current_ > P_.I_th_){
+		    if (S_.current_ > P_.I_th_)
+		      {
 		      if (corpre < P_.I_th_ || S_.current_ == 0){
 		    	  S_.init_sign_ = t_final;
 			S_.Idep_ini_ = std::max(P_.Idep_ini_vr_, P_.cost_idep_ini_*(S_.current_ - P_.I_th_));
 			S_.Iadap_ini_ = 0;
 			      
-			currCoeff = (S_.current_ - P_.I_th_)/S_.current_;
-			v_ini = ((P_.E_L_ + (1 - exp(-(2 + currCoeff)*S_.current_/1000) )*(P_.V_th_ - P_.E_L_))/(-P_.E_L_));
+			v_ini = -1.0 + 0.2798 * (1 - exp( -3.19 * S_.current_ / 1000));
 			v_ini = migliV(t_final, P_.delta1_, V_.psi1,
 				       S_.current_/P_.sc_, P_.bet_, S_.Iadap_ini_, S_.Idep_ini_, t0_val, v_ini, S_.r_ref_, V_.vrm);
 			S_.Iadap_ini_ = Iadap(t_final, P_.delta1_, V_.psi1, S_.current_ / P_.sc_, P_.bet_, S_.Iadap_ini_, S_.Idep_ini_, t0_val, v_ini, S_.r_ref_);
@@ -660,24 +660,17 @@ namespace nest
 		    }
 		    if (corpre == 0) {
 		    	v_ini = vini_prec;
-		    } else {
-			currCoeff = 0;
-			v_ini = ((P_.E_L_ + (1 - exp(-(2 + currCoeff)*S_.current_/1000) )*(P_.V_th_ - P_.E_L_))/(-P_.E_L_));
-		    }
+		    } else
+		      {
+			v_ini = -1.0 + 0.2798 * (1 - exp( -3.19 * S_.current_ / 1000));
+		      }
 		    vini_prec = v_ini;
 		  } else {
-			  vini_prec = v_ini;
+		    vini_prec = v_ini;
 		    if ((S_.current_ < P_.I_th_ && S_.current_ >= 0) || S_.sis_ == 0){
-		      v_ini = migliV(t_final, P_.delta1_, V_.psi1,
-				     S_.current_/P_.sc_, P_.bet_,
-				     S_.Iadap_ini_, S_.Idep_ini_,
-				     t0_val, v_ini, S_.r_ref_, V_.vrm);
-		      S_.Iadap_ini_ = Iadap(t_final, P_.delta1_, V_.psi1,
-					    S_.current_ / P_.sc_, P_.bet_, S_.Iadap_ini_,
-					    S_.Idep_ini_, t0_val, v_ini, S_.r_ref_);
-		      S_.Idep_ini_ = Idep(t_final, P_.bet_, S_.Idep_ini_, t0_val, S_.r_ref_);
+		      v_ini = -1.0 + 0.2798 * (1 - exp( -3.19 * S_.current_ / 1000));
 		    } else{
-		      if ( V_.out.size() > 2 && S_.current_ < corpre && S_.current_ > 0 && ((V_.t_spk + 2 * V_.d_dt) < t_final * V_.time_scale)) {
+		      if ( V_.out.size() > 2 && S_.current_ < corpre && S_.current_ > 0 && ((V_.t_spk + 2 * V_.d_dt) < t_final * V_.time_scale_)) {
 			teta = (V_.out[V_.out.size()-1] / (corpre / P_.sc_)) * (1/V_.dt-P_.delta1_)
 			  -(V_.out[V_.out.size()-2] / ((corpre / P_.sc_)*V_.dt))
 			  -P_.delta1_ / (corpre / P_.sc_) -1;
@@ -709,20 +702,20 @@ namespace nest
 			}
 		      if (S_.current_ < 0 && S_.current_ > V_.mincurr)
 			{
-			  v_ini = -1 + (1 + V_.V_star_min_) * S_.current_ / P_.sc_ / V_.alpha_neg_;
+			  v_ini = -1.0 + 0.2798 * ( 1 - exp( -3.19 * S_.current_ / 1000));
 			}
 		      if (corpre != S_.current_  && S_.current_ <= V_.mincurr){
 			S_.Iadap_ini_ = -P_.V_min_ / P_.E_L_ + 1;
 			S_.Idep_ini_ = 0;
-			v_ini = - 1 + (1 + V_.V_star_min_) * S_.current_ / P_.sc_ / V_.alpha_neg_;
+			v_ini = -1.0 + 0.2798 * ( 1 - exp( -3.19 * S_.current_ / 1000));
 		      }
 		      if (S_.current_ <= V_.mincurr) {
 			v_ini = V_.V_star_min_;
 		      }
-		      if (v_ini * V_.Vconvfact < P_.V_min_){
-			v_ini = P_.V_min_ / V_.Vconvfact;
-			S_.Iadap_ini_ = P_.Iadap_start_;
-		      }
+		    }
+		    if (v_ini * V_.Vconvfact < P_.V_min_){
+		      v_ini = P_.V_min_ / V_.Vconvfact;
+		      S_.Iadap_ini_ = P_.Iadap_start_;
 		    }
 		  }
 		  if (S_.current_ > P_.I_th_) {
@@ -730,8 +723,8 @@ namespace nest
 		      S_.init_sign_ = t_final;
 		      S_.Idep_ini_ = std::max(P_.Idep_ini_vr_, P_.cost_idep_ini_*(S_.current_ - P_.I_th_));
 		      S_.Iadap_ini_ = 0;                
-		      currCoeff = 0;
-		      v_ini = ((P_.E_L_ + (1 - exp(-(2 + currCoeff)*S_.current_/1000) )*(P_.V_th_ - P_.E_L_))/(-P_.E_L_));
+		      // currCoeff = 0;
+		      v_ini = -1.0 + 0.2798 * ( 1 - exp( -3.19 * S_.current_ / 1000));
                     
 		      if (S_.current_<1e-11) {
 			v_ini = -1;
@@ -745,8 +738,8 @@ namespace nest
 		  {
 			  V_.out.erase(V_.out.begin());
 		  }
-		  // lower bound of membrane potential
-		  S_.V_m_ = ( S_.V_m_ < P_.V_min_ ? P_.V_min_ : S_.V_m_ );
+		  // lower bound of membrane potential REMOVED in 041 version
+		  // S_.V_m_ = ( S_.V_m_ < P_.V_min_ ? P_.V_min_ : S_.V_m_ );
 
 		  // Count down for refractory period
 		  if (S_.r_ref_ > 0) {--S_.r_ref_;}
@@ -759,32 +752,38 @@ namespace nest
 		  {
 			  S_.r_ref_ = V_.RefractoryCounts_; // Inizialize refractory
 
-			  V_.t_spk = t_final * V_.time_scale;
+			  V_.t_spk = t_final * V_.time_scale_;
 			  // f.write(str(round(t_spk, 3)) + ' \n')
 			  S_.V_m_ = P_.Vres_; // -65
 			  v_ini = V_.vrm;
-
+			  c_aux = P_.c_;
 			  if (S_.current_ < P_.istim_min_spikinig_exp_ || S_.current_ > P_.istim_max_spikinig_exp_)
-			  {
-				  c_aux = 0.8 * P_.Idep_ini_vr_ + (S_.current_/(P_.sc_)) / P_.bet_
-						  +(P_.delta1_/P_.bet_) * (1 + V_.vrm)
-						  -P_.a_ * exp(P_.b_* S_.current_/1000);
-				  S_.Iadap_ini_ = monod((t_final - S_.init_sign_) * V_.time_scale,
-						  P_.a_, P_.b_ * S_.current_ / 1000, c_aux, P_.alp_);
+			    {
+			      c_aux = P_.c_;
+			      S_.Iadap_ini_ = monod((t_final-S_.init_sign_) * V_.time_scale_,
+						    P_.a_, P_.b_ * S_.current_/1000, P_.c_, P_.alp_);
+			    } else {
+			    // orig parameters
+			    S_.Iadap_ini_ = monod((t_final - S_.init_sign_) * V_.time_scale_, P_.a_, P_.b_ * S_.current_ / 1000, P_.c_, P_.alp_);
+			    // print('Iadap_ini: ',Iadap_ini)
+			    if (S_.Iadap_ini_<0) {
+			      // print('monod negativa')
+			      //sinapt
+			      paramL_ = S_.Iadap_ini_;
+			      if (P_.a_ > 0) {
+				c_aux = P_.c_ - paramL_;
+			      } else {
+                                c_aux = -P_.a_ * exp(P_.b_ * S_.current_ / 1000);
+			      }
+			      S_.Iadap_ini_ = monod((t_final-S_.init_sign_) * V_.time_scale_, P_.a_, P_.b_ * S_.current_/1000, c_aux, P_.alp_);
+			    }
 			  }
-			  else
-			  {
-				  S_.Iadap_ini_ = monod((t_final-S_.init_sign_) * V_.time_scale,
-						  P_.a_, P_.b_ * S_.current_/1000, P_.c_, P_.alp_);
-			  }
-			  if (S_.current_ < P_.I_th_)
-			  {
-				  S_.Idep_ini_ = 0;
-				  S_.Iadap_ini_ = P_.Iadap_start_;
-			  }
-			  else
-			  {
-				  S_.Idep_ini_ = P_.Idep_ini_vr_;
+			  
+			  if (S_.current_ < P_.I_th_) {
+			    S_.Idep_ini_ = 0;
+			    S_.Iadap_ini_ = P_.Iadap_start_;
+			  } else {
+			    S_.Idep_ini_ = P_.Idep_ini_vr_;
 			  }
 
 			  // compute spike time
