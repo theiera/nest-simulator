@@ -580,7 +580,9 @@ namespace nest
   double
   migliore::mgblock(double v)
   {
-    return 1 / (1 + exp(P_.mgb_k_ * -(v - P_.mgb_shift_)) * (P_.mg_ / P_.mg_ref_));
+    double block;
+    block = 1 / (1 + exp(P_.mgb_k_ * -(v - P_.mgb_shift_)) * (P_.mg_ / P_.mg_ref_));
+    return block;
   }
   
   void
@@ -594,7 +596,7 @@ namespace nest
 	  double t_final = t0_val + local_time_step;
 
 	  
-	  double v_ini = S_.V_m_ / V_.Vconvfact;
+	  double v_ini = set_v_ini(S_.V_m_ / V_.Vconvfact,S_.r_ref_, V_.vrm);
 	  double vini_prec = v_ini;
 	  double teta;
 	  double c_aux;
@@ -614,15 +616,15 @@ namespace nest
 		  S_.I_inj_ = B_.currents_.get_value( lag );
 		  S_.current_ = S_.I_inj_; // + S_.I;
 		  // Update synaptic currents
-		  if ( S_.r_ref_ == 0 )
-		    {
+		  // if ( S_.r_ref_ == 0 )
+		  //   {
 		      // neuron not refractory, so evolve add synaptic currents
 		      for ( size_t i = 0; i < P_.n_receptors_(); i++ )
 			{
 			  // S_.V_m_ += V_.P21_syn_[ i ] * S_.i_syn_[ i ];
 			  S_.current_ += S_.i_syn_[ i ];
 			}
-		    }
+		    // }
 		  for ( size_t i = 0; i < P_.n_receptors_(); i++ )
 		    {
 		      // exponential decaying PSCs
@@ -633,6 +635,9 @@ namespace nest
 		      S_.i_syn_fast_[ i ] += input_spike; // not sure about this
 		      if ( i == 0 )
 			{
+			  if (S_.i_syn_slow_[ i ] < 0) {
+			    std::cout << S_.i_syn_slow_[ i ] << "\n";
+			  }
 			  S_.i_syn_slow_[ i ] += input_spike * P_.NMDA_ratio_ * mgblock(S_.V_m_); // not sure about this
 			}
 		      S_.i_syn_[ i ] = S_.i_syn_fast_[ i ] + S_.i_syn_slow_[ i ];
@@ -651,7 +656,7 @@ namespace nest
 			S_.Idep_ini_ = std::max(P_.Idep_ini_vr_, P_.cost_idep_ini_*(S_.current_ - P_.I_th_));
 			S_.Iadap_ini_ = 0;
 			      
-			v_ini = -1.0 + 0.2798 * (1 - exp( -3.19 * S_.current_ / 1000));
+			v_ini = set_v_ini(-1.0 + 0.2798 * (1 - exp( -3.19 * S_.current_ / 1000)), S_.r_ref_, V_.vrm);
 			v_ini = migliV(t_final, P_.delta1_, V_.psi1,
 				       S_.current_/P_.sc_, P_.bet_, S_.Iadap_ini_, S_.Idep_ini_, t0_val, v_ini, S_.r_ref_, V_.vrm);
 			S_.Iadap_ini_ = Iadap(t_final, P_.delta1_, V_.psi1, S_.current_ / P_.sc_, P_.bet_, S_.Iadap_ini_, S_.Idep_ini_, t0_val, v_ini, S_.r_ref_);
@@ -659,16 +664,16 @@ namespace nest
 		      }
 		    }
 		    if (corpre == 0) {
-		    	v_ini = vini_prec;
+		      v_ini = set_v_ini(vini_prec, S_.r_ref_, V_.vrm);
 		    } else
 		      {
-			v_ini = -1.0 + 0.2798 * (1 - exp( -3.19 * S_.current_ / 1000));
+			v_ini = set_v_ini(-1.0 + 0.2798 * (1 - exp( -3.19 * S_.current_ / 1000)), S_.r_ref_, V_.vrm);
 		      }
 		    vini_prec = v_ini;
 		  } else {
 		    vini_prec = v_ini;
 		    if ((S_.current_ < P_.I_th_ && S_.current_ >= 0) || S_.sis_ == 0){
-		      v_ini = -1.0 + 0.2798 * (1 - exp( -3.19 * S_.current_ / 1000));
+		      v_ini = set_v_ini(-1.0 + 0.2798 * (1 - exp( -3.19 * S_.current_ / 1000)), S_.r_ref_, V_.vrm);
 		    } else{
 		      if ( V_.out.size() > 2 && S_.current_ < corpre && S_.current_ > 0 && ((V_.t_spk + 2 * V_.d_dt) < t_final * V_.time_scale_)) {
 			teta = (V_.out[V_.out.size()-1] / (corpre / P_.sc_)) * (1/V_.dt-P_.delta1_)
@@ -698,16 +703,16 @@ namespace nest
 		      }
 		      if (corpre != S_.current_ && (S_.current_ < 0 && S_.current_ > V_.mincurr))
 			{
-			  v_ini = vini_prec;
+			  v_ini = set_v_ini( vini_prec, S_.r_ref_, V_.vrm);
 			}
 		      if (S_.current_ < 0 && S_.current_ > V_.mincurr)
 			{
-			  v_ini = -1.0 + 0.2798 * ( 1 - exp( -3.19 * S_.current_ / 1000));
+			  v_ini = set_v_ini(-1.0 + 0.2798 * (1 - exp( -3.19 * S_.current_ / 1000)), S_.r_ref_, V_.vrm);
 			}
 		      if (corpre != S_.current_  && S_.current_ <= V_.mincurr){
 			S_.Iadap_ini_ = -P_.V_min_ / P_.E_L_ + 1;
 			S_.Idep_ini_ = 0;
-			v_ini = -1.0 + 0.2798 * ( 1 - exp( -3.19 * S_.current_ / 1000));
+			v_ini = set_v_ini(-1.0 + 0.2798 * (1 - exp( -3.19 * S_.current_ / 1000)), S_.r_ref_, V_.vrm);
 		      }
 		      if (S_.current_ <= V_.mincurr) {
 			v_ini = V_.V_star_min_;
@@ -724,8 +729,7 @@ namespace nest
 		      S_.Idep_ini_ = std::max(P_.Idep_ini_vr_, P_.cost_idep_ini_*(S_.current_ - P_.I_th_));
 		      S_.Iadap_ini_ = 0;                
 		      // currCoeff = 0;
-		      v_ini = -1.0 + 0.2798 * ( 1 - exp( -3.19 * S_.current_ / 1000));
-                    
+		      v_ini = set_v_ini(-1.0 + 0.2798 * (1 - exp( -3.19 * S_.current_ / 1000)), S_.r_ref_, V_.vrm);                    
 		      if (S_.current_<1e-11) {
 			v_ini = -1;
 		      }
