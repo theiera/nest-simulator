@@ -165,6 +165,7 @@ private:
 		double, double, double, 
 		double, double, double,
 		int, double);  
+  double default_v_ini(double, double);
   double set_v_ini(double, int, double);
   
   double Iadap(double, double, double, double,
