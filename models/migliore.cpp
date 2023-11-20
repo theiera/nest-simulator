@@ -512,7 +512,8 @@ namespace nest
   double
   migliore::default_v_ini(double currCoeff, double cor_i)
   {
-    double to_return = ((P_.E_L_ + (1 - exp(-(2.5 + currCoeff)*cor_i/1000) )*(P_.V_th_ - P_.E_L_))/(-P_.E_L_));
+    double to_return = (P_.E_L_ + (1 - exp(-(2.5 + currCoeff)*cor_i/1000) )*(P_.V_th_ - P_.E_L_))/(-P_.E_L_);
+    std::cout << currCoeff << " " << cor_i << " " << to_return << " " << to_return*V_.Vconvfact << "\n";
     return set_v_ini(to_return, S_.r_ref_, V_.vrm);
   }
   
@@ -659,7 +660,7 @@ namespace nest
 		  {
 		    if (S_.current_ > P_.I_th_)
 		      {
-		      if (corpre < P_.I_th_ || S_.current_ == 0){
+		      if (corpre < P_.I_th_ || S_.sis_ == 0){
 		    	  S_.init_sign_ = t_final;
 			S_.Idep_ini_ = std::max(P_.Idep_ini_vr_, P_.cost_idep_ini_*(S_.current_ - P_.I_th_));
 			S_.Iadap_ini_ = 0;
@@ -676,14 +677,18 @@ namespace nest
 		      v_ini = set_v_ini(vini_prec, S_.r_ref_, V_.vrm);
 		    } else
 		      {
-			currCoeff = (S_.current_ - P_.I_th_)/S_.current_;
+			if (S_.current_ < P_.I_th_ && S_.current_ > 0) {currCoeff = 0;}
+			else if (S_.current_<=0) {currCoeff = 1;}
+			else
+			  { currCoeff = (S_.current_ - P_.I_th_)/S_.current_;}
 			v_ini = default_v_ini(currCoeff, S_.current_);
 		      }
 		    vini_prec = v_ini;
 		  } else {
 		    vini_prec = v_ini;
-		    if ((S_.current_ < P_.I_th_ && S_.current_ >= 0) || S_.sis_ == 0){
-			currCoeff = (S_.current_ - P_.I_th_)/S_.current_;
+		    if ((S_.current_ < P_.I_th_ && S_.current_ >= 0) || S_.sis_ == 0)
+		      {
+			currCoeff = 0;
 			v_ini = default_v_ini(currCoeff, S_.current_);
 		    } else{
 		      if ( V_.out.size() > 2 && S_.current_ < corpre && S_.current_ > 0 && ((V_.t_spk + 2 * V_.d_dt) < t_final * V_.time_scale_)) {
@@ -718,13 +723,13 @@ namespace nest
 			}
 		      if (S_.current_ < 0 && S_.current_ > V_.mincurr)
 			{
-			  currCoeff = (S_.current_ - P_.I_th_)/S_.current_;
+			  currCoeff = 1;
 			  v_ini = default_v_ini(currCoeff, S_.current_);
 			}
 		      if (corpre != S_.current_  && S_.current_ <= V_.mincurr){
 			S_.Iadap_ini_ = -P_.V_min_ / P_.E_L_ + 1;
 			S_.Idep_ini_ = 0;
-			currCoeff = (S_.current_ - P_.I_th_)/S_.current_;
+			currCoeff = 1;
 			v_ini = default_v_ini(currCoeff, S_.current_);
 		      }
 		      if (S_.current_ <= V_.mincurr) {
