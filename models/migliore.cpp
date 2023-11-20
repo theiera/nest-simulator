@@ -513,7 +513,6 @@ namespace nest
   migliore::default_v_ini(double currCoeff, double cor_i)
   {
     double to_return = (P_.E_L_ + (1 - exp(-(2.5 + currCoeff)*cor_i/1000) )*(P_.V_th_ - P_.E_L_))/(-P_.E_L_);
-    std::cout << currCoeff << " " << cor_i << " " << to_return << " " << to_return*V_.Vconvfact << "\n";
     return set_v_ini(to_return, S_.r_ref_, V_.vrm);
   }
   
