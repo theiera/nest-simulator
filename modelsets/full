@@ -62,6 +62,7 @@ lin_rate
 mat2_psc_exp
 mcculloch_pitts_neuron
 migliore
+migliore_ode
 mip_generator
 multimeter
 music_cont_in_proxy

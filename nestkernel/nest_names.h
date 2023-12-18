@@ -660,6 +660,7 @@ extern const Name mg;
 extern const Name mg_ref;
 extern const Name mgb_k;
 extern const Name mgb_shift;
+extern const Name mincurr;
 } // namespace names
 
 } // namespace nest
