@@ -165,7 +165,7 @@ namespace nest
     def< double >( d, names::V_min, V_min_ );
     def< double >( d, names::E_L, E_L_ );
     def< double >( d, names::Vres, Vres_ );
-//    def< double >( d, names::vtm, vtm_);
+    //    def< double >( d, names::vtm, vtm_);
     def< double >( d, names::Cm, Cm_);
     def< double >( d, names::I_th, I_th_);
     def< double >( d, names::tao_m, tao_m_);
@@ -204,7 +204,7 @@ namespace nest
     updateValueParam< double >( d, names::I_e, I_e_, node ); // External current injection
     updateValueParam< double >( d, names::E_L, E_L_, node );
     updateValueParam< double >( d, names::Vres, Vres_, node );
-//    updateValueParam< double >( d, names::vtm, vtm_, node );
+    //    updateValueParam< double >( d, names::vtm, vtm_, node );
     updateValueParam< double >( d, names::Cm, Cm_, node );
     updateValueParam< double >( d, names::I_th, I_th_, node );
     updateValueParam< double >( d, names::tao_m, tao_m_, node );
@@ -237,9 +237,9 @@ namespace nest
     if ( updateValue< std::vector< double > >( d, "tau_syn", tau_syn_ ) )
       {
     	if ( this->n_receptors_() != old_n_receptors && has_connections_ == true )
-    		{
-    			throw BadProperty( "The neuron has connections, therefore the number of ports cannot be reduced." );
-    		}
+	  {
+	    throw BadProperty( "The neuron has connections, therefore the number of ports cannot be reduced." );
+	  }
 	for ( size_t i = 0; i < tau_syn_.size(); ++i )
 	  {
 	    if ( tau_syn_[ i ] <= 0 )
@@ -324,7 +324,7 @@ namespace nest
   void
   nest::migliore::pre_run_hook()
   {
-	B_.logger_.init();
+    B_.logger_.init();
 
     // t_ref_ specifies the length of the absolute refractory period as
     // a double in ms. The grid based iaf_psc_exp can only handle refractory
@@ -363,18 +363,18 @@ namespace nest
 
     for ( size_t i = 0; i < P_.n_receptors_(); i++ )
       {
-		V_.P11_syn_fast_[ i ] = std::exp( -h / P_.tau_syn_[ i ] );
-		if (i == 0)
-		  {
-		    V_.P11_syn_slow_[ i ] = std::exp( -h / P_.tau_syn_NMDA_ );
-		  }
-		else
-		  {
-		    V_.P11_syn_slow_[ i ] = 0;
-		  }
-		// these are determined according to a numeric stability criterion
-		// V_.P21_syn_[ i ] = propagator_32( P_.tau_syn_[ i ], P_.tao_m_, P_.Cm_, h );
-		B_.spikes_[ i ].resize();
+	V_.P11_syn_fast_[ i ] = std::exp( -h / P_.tau_syn_[ i ] );
+	if (i == 0)
+	  {
+	    V_.P11_syn_slow_[ i ] = std::exp( -h / P_.tau_syn_NMDA_ );
+	  }
+	else
+	  {
+	    V_.P11_syn_slow_[ i ] = 0;
+	  }
+	// these are determined according to a numeric stability criterion
+	// V_.P21_syn_[ i ] = propagator_32( P_.tau_syn_[ i ], P_.tao_m_, P_.Cm_, h );
+	B_.spikes_[ i ].resize();
       }
 
     V_.RefractoryCounts_ = Time( Time::ms( P_.t_ref_ ) ).get_steps();
@@ -408,7 +408,7 @@ namespace nest
     // V_.VV_6 = (pow(P_.bet_,2) -P_.delta1_ + P_.bet_ * P_.delta1_);
     // V_.VV_7 = (1.0 + (-2.0) * P_.bet_ + P_.delta1_ -P_.psi1_);
     // V_.VV_8 = exp((1.0 / 2.0) * V_.t_step * (-1.0 + P_.delta1_ + P_.psi1_));
-     // V_.VV_9 = P_.bet_ * (P_.bet_-P_.delta1_) * (-1.0 -P_.delta1_ -P_.psi1_ + P_.bet_ * (3.0 + P_.delta1_ + P_.psi1_));
+    // V_.VV_9 = P_.bet_ * (P_.bet_-P_.delta1_) * (-1.0 -P_.delta1_ -P_.psi1_ + P_.bet_ * (3.0 + P_.delta1_ + P_.psi1_));
     // V_.VV_10 = (pow(P_.bet_,2) - P_.delta1_ + P_.bet_ * P_.delta1_);
     // V_.VV_11 = (1.0 + (-2.0) * P_.bet_ + P_.delta1_ + P_.psi1_);
     // V_.C = P_.bet_ - P_.delta1_;
@@ -470,11 +470,13 @@ namespace nest
 
   double
   migliore::migliV(double t, double delta, double Psi, 
-			 double alpha, double beta, double IaA0, 
-			 double IdA0, double t0, double V0,
-			 int r_ref_, double vrm)
+		   double alpha, double beta, double IaA0, 
+		   double IdA0, double t0, double V0,
+		   int r_ref_, double vrm)
   {
-    double to_return = V_.VV_1 * (2.0 * exp((t0 - t) * beta) * IdA0 * V_.VV_2 - 2.0 * (alpha - beta + delta) * V_.VV_3 + exp(V_.VV_4 * (t - t0)) * (IdA0 * V_.VV_5 - V_.VV_6 * (alpha * V_.VV_7 + (beta - delta) * (-1.0 + 2.0 * IaA0 * beta - delta + Psi + V0 * (-1.0 - delta + Psi)))) + exp(0.5 * (t - t0) * (-1.0 + delta + Psi)) * (- IdA0 * V_.VV_8 + V_.VV_9 * (alpha * V_.VV_10 + (beta - delta) * (-1.0 + 2.0 * IaA0 * beta - delta - Psi - V0 * (1.0 + delta + Psi)))));
+    double to_return = 0.5 / (beta -delta) / (pow(beta,2.0) + (-1.0 + beta) * delta) / (4 * beta + (- 1.0) * pow((1.0 + delta),2.0)) * Psi *      (2.0 * exp((-t + t0) * beta) * IdA0 * (-1.0 + beta) * beta * (beta -delta) * Psi + (-2.0) * (alpha + (-1.0) * beta + delta) * (pow(beta,2.0) + ((-1.0) + beta) * delta) * Psi + exp(0.5 * (t - t0) * (-1.0 + delta - Psi)) * (IdA0 * beta * (beta -delta) * (-1.0 -delta + beta * (3.0 + delta - Psi) + Psi) - (pow(beta,2.0) -delta + beta * delta) * (alpha * (1.0 + (-2.0) * beta + delta - Psi) + (beta -delta) * ((-1.0) + 2.0 * IaA0 * beta -delta + Psi + V0 * (-1.0 -delta + Psi)))) + exp(0.5 * (t + (-1.0) * t0) * (-1.0 + delta + Psi)) * (- IdA0 * beta * (beta - delta) * (-1.0 -delta - Psi + beta * (3.0 + delta + Psi)) + (pow(beta,2.0) -delta + beta * delta) * (alpha * (1.0 + (-2.0) * beta + delta + Psi) + (beta -delta) * (-1.0 + 2.0 * IaA0 * beta - delta - Psi - V0 * (1.0 + delta + Psi)))));
+      
+    //    double to_return = V_.VV_1 * (2.0 * exp((t0 - t) * beta) * IdA0 * V_.VV_2 - 2.0 * (alpha - beta + delta) * V_.VV_3 + exp(V_.VV_4 * (t - t0)) * (IdA0 * V_.VV_5 - V_.VV_6 * (alpha * V_.VV_7 + (beta - delta) * (-1.0 + 2.0 * IaA0 * beta - delta + Psi + V0 * (-1.0 - delta + Psi)))) + exp(0.5 * (t - t0) * (-1.0 + delta + Psi)) * (- IdA0 * V_.VV_8 + V_.VV_9 * (alpha * V_.VV_10 + (beta - delta) * (-1.0 + 2.0 * IaA0 * beta - delta - Psi - V0 * (1.0 + delta + Psi)))));
 
     // double to_return = 0.5 / (beta - delta) / (pow(beta,2.0) + (beta - 1.0) * delta) / (4 * beta - pow((1.0 + delta),2.0)) *
     // 		Psi * (2.0 * exp((t0 - t) * beta) * IdA0 * (beta - 1.0) * beta * (beta - delta) * Psi -2.0 * (alpha - beta + delta) *
@@ -488,7 +490,7 @@ namespace nest
     // 													(beta -delta) * (-1.0 + 2 * IaA0 * beta - delta - Psi - V0 * (1 + delta + Psi)))));
 
     // double to_return = V_.VV_1 * (2.0 * exp(-(t-t0) * beta) * IdA0 * V_.VV_3 -2.0 * (alpha - beta + delta) * V_.VV_4  + exp(0.5 * (t-t0) * (-1.0 + delta - Psi)) * (IdA0 * V_.VV_6 - V_.VV_7 * (alpha * V_.VV_8 + (beta - delta) * (-1.0 + 2.0 * IaA0 * beta + V_.VV_9 + V0 * V_.VV_9b))) + exp(0.5 * (t-t0) * (-1.0 + delta + Psi)) * (-IdA0 * V_.VV_11 + V_.VV_12 * (alpha * V_.VV_13 + V_.VV_14 * (-1.0 + 2 * IaA0 * beta - delta - Psi - V0 * (1 + delta + Psi)))));
-	  // double to_return = V_.VV_1 * (V_.VV_2 * IdA0 * V_.VV_3 -2.0 * (alpha - beta + delta) * V_.VV_4  + V_.VV_5 * (IdA0 * V_.VV_6 - V_.VV_7 * (alpha * V_.VV_8 + (beta - delta) * (-1.0 + 2.0 * IaA0 * beta + +  V_.VV_9 + V0 * V_.VV_9b))) + V_.VV_10 * (-IdA0 * V_.VV_11 + V_.VV_12 * (alpha * V_.VV_13 + V_.VV_14 * (-1.0 + 2 * IaA0 * beta - delta - Psi - V0 * (1 + delta + Psi)))));
+    // double to_return = V_.VV_1 * (V_.VV_2 * IdA0 * V_.VV_3 -2.0 * (alpha - beta + delta) * V_.VV_4  + V_.VV_5 * (IdA0 * V_.VV_6 - V_.VV_7 * (alpha * V_.VV_8 + (beta - delta) * (-1.0 + 2.0 * IaA0 * beta + +  V_.VV_9 + V0 * V_.VV_9b))) + V_.VV_10 * (-IdA0 * V_.VV_11 + V_.VV_12 * (alpha * V_.VV_13 + V_.VV_14 * (-1.0 + 2 * IaA0 * beta - delta - Psi - V0 * (1 + delta + Psi)))));
 
     //double to_return = V_.VV_1 * (V_.VV_2 * IdA0 + -2.0 * (alpha -beta + delta) * V_.VV_3 + V_.VV_4 * (IdA0 * V_.VV_5 - V_.VV_6 * (alpha * V_.VV_7 + (beta -delta) * (-1.0 + 2.0 * IaA0 * beta -delta + Psi + V0 * (-1.0 -delta + Psi)))) + V_.VV_8 * (-IdA0 * V_.VV_9 + V_.VV_10 * (alpha * V_.VV_11 + (beta -delta) * (-1.0 + 2.0 * IaA0 * beta-delta -Psi -V0 * (1.0 + delta + Psi)))));
     if (to_return < 1e-11 && to_return > -1e-11) {to_return = 0;}
@@ -518,7 +520,7 @@ namespace nest
   
   double
   migliore::set_v_ini(double to_v_ini,
-			    int r_ref_, double vrm)
+		      int r_ref_, double vrm)
   {
     if (r_ref_ == 0)
       {
@@ -534,10 +536,11 @@ namespace nest
 
   double
   migliore::Iadap(double t, double delta, double Psi, double alpha,
-			double beta, double IaA0, double IdA0, double t0,
-			double V0, int r_ref_)
+		  double beta, double IaA0, double IdA0, double t0,
+		  double V0, int r_ref_)
   {
-    double to_return = (-2.0 * alpha * (-4.0 * pow(beta,3.0) + pow(beta,2.0) * pow((-1.0 + delta),2.0) - delta * pow((1.0 + delta),2.0) + beta * delta * (5 + 2.0 * delta + pow(delta,2.0))) + 2.0 * exp(((-1.0) * t  +  t0)  *  beta) * IdA0 * beta * (4.0 * pow(beta,2.0) + delta * pow((1.0 + delta),2.0) - beta * (1.0 + 6 * delta + pow(delta,2.0))) + exp(0.5 * (t-t0) * (-1.0 + delta + Psi)) * (-IdA0 * beta * (beta-delta) * (-1.0 + (-2.0) * delta - pow(delta,2.0) - Psi + delta * Psi + 2.0 * beta * (2.0 + Psi)) + (pow(beta,2.0) - delta + beta * delta) * (alpha * (1.0 + (-4.0) * beta + 2.0 * delta + pow(delta,2.0) + Psi-delta * Psi) + (beta-delta) * (4.0 * IaA0 * beta-2.0 * (1.0 + V0) * Psi + IaA0 * (1.0 + delta) * (-1.0-delta + Psi)))) + exp((-1.0) * (1.0 / 2.0)  *  (t-t0)  *  (1.0-delta + Psi)) * (IdA0 * beta * (beta-delta) * (1.0 + 2.0 * delta + pow(delta,2.0)-Psi + delta * Psi + 2.0 * beta * (-2.0 + Psi)) + (pow(beta,2.0) - delta + beta * delta) * (alpha * (1.0 - 4.0 * beta + 2.0 * delta + pow(delta,2.0) - Psi + delta * Psi)-(beta-delta) * (-4.0 * IaA0 * beta-2.0 * (1.0 + V0) * Psi + IaA0 * (1.0 + delta) * (1.0 + delta + Psi)))))/(2.0 * (beta-delta) * (pow(beta,2.0) + (-1.0 + beta) * delta) * (4.0 * beta - pow((1.0 + delta),2.0)));
+    double to_return = ( - 2.0 * alpha * ( - 4 * pow(beta, 3.0) + pow(beta, 2.0) * pow(( - 1.0 + delta), 2.0) - delta * pow((1.0 + delta), 2.0) + beta * delta * (5 + 2.0 * delta + pow(delta, 2.0))) + 2.0 * exp((( - 1.0) * t + t0) * beta) * IdA0 * beta * (4 * pow(beta, 2.0) + delta * pow((1.0 + delta), 2.0) - beta * (1.0 + 6 * delta + pow(delta, 2.0))) + exp((1.0 / 2.0) * (t - t0) * ( - 1.0 + delta + Psi)) * ( - IdA0 * beta * (beta - delta) * ( - 1.0 + ( - 2.0) * delta - pow(delta, 2.0) - Psi + delta * Psi + 2.0 * beta * (2.0 + Psi)) + (pow(beta, 2.0) - delta + beta * delta) * (alpha * (1.0 + ( - 4) * beta + 2.0 * delta + pow(delta, 2.0) + Psi - delta * Psi) + (beta - delta) * (4 * IaA0 * beta - 2.0 * (1.0 + V0) * Psi + IaA0 * (1.0 + delta) * ( - 1.0 - delta + Psi)))) + exp(( - 1.0) * (1.0 / 2.0) * (t - t0) * (1.0 - delta + Psi)) * (IdA0 * beta * (beta - delta) * (1.0 + 2.0 * delta + pow(delta, 2.0) - Psi + delta * Psi + 2.0 * beta * ( - 2.0 + Psi)) + (pow(beta, 2.0) - delta + beta * delta) * (alpha * (1.0 - 4 * beta + 2.0 * delta + pow(delta, 2.0) - Psi + delta * Psi) - (beta - delta) * ( - 4 * IaA0 * beta - 2.0 * (1.0 + V0) * Psi + IaA0 * (1.0 + delta) * (1.0 + delta + Psi))))) / (2.0 * (beta - delta) * (pow(beta, 2.0) + ( - 1.0 + beta) * delta) * (4 * beta - pow((1.0 + delta), 2.0)));
+    // double to_return = (-2.0 * alpha * (-4.0 * pow(beta,3.0) + pow(beta,2.0) * pow((-1.0 + delta),2.0) - delta * pow((1.0 + delta),2.0) + beta * delta * (5 + 2.0 * delta + pow(delta,2.0))) + 2.0 * exp(((-1.0) * t  +  t0)  *  beta) * IdA0 * beta * (4.0 * pow(beta,2.0) + delta * pow((1.0 + delta),2.0) - beta * (1.0 + 6 * delta + pow(delta,2.0))) + exp(0.5 * (t-t0) * (-1.0 + delta + Psi)) * (-IdA0 * beta * (beta-delta) * (-1.0 + (-2.0) * delta - pow(delta,2.0) - Psi + delta * Psi + 2.0 * beta * (2.0 + Psi)) + (pow(beta,2.0) - delta + beta * delta) * (alpha * (1.0 + (-4.0) * beta + 2.0 * delta + pow(delta,2.0) + Psi-delta * Psi) + (beta-delta) * (4.0 * IaA0 * beta-2.0 * (1.0 + V0) * Psi + IaA0 * (1.0 + delta) * (-1.0-delta + Psi)))) + exp((-1.0) * (1.0 / 2.0)  *  (t-t0)  *  (1.0-delta + Psi)) * (IdA0 * beta * (beta-delta) * (1.0 + 2.0 * delta + pow(delta,2.0)-Psi + delta * Psi + 2.0 * beta * (-2.0 + Psi)) + (pow(beta,2.0) - delta + beta * delta) * (alpha * (1.0 - 4.0 * beta + 2.0 * delta + pow(delta,2.0) - Psi + delta * Psi)-(beta-delta) * (-4.0 * IaA0 * beta-2.0 * (1.0 + V0) * Psi + IaA0 * (1.0 + delta) * (1.0 + delta + Psi)))))/(2.0 * (beta-delta) * (pow(beta,2.0) + (-1.0 + beta) * delta) * (4.0 * beta - pow((1.0 + delta),2.0)));
     // double to_return = (-2.0*alpha*(-4.0*pow(beta,3.0)+pow(beta,2.0)*pow((-1.0+delta),2.0)-delta*pow((1.0+delta),2.0)+beta*delta*(5+2.0*delta+pow(delta,2.0)))+2.0*exp(((-1.0)*t + t0) * beta)*IdA0*beta*(4.0*pow(beta,2.0)+delta*pow((1.0+delta),2.0)-beta*(1.0+6*delta+pow(delta,2.0)))+exp((1.0 / 2.0)*(t-t0)*(-1.0+delta+Psi))*(-IdA0*beta*(beta-delta)*(-1.0+(-2.0)*delta-pow(delta,2.0)-Psi+delta*Psi+2.0*beta*(2.0+Psi))+(pow(beta,2.0)-delta+beta*delta)*(alpha*(1.0+(-4.0)*beta+2.0*delta+pow(delta,2.0)+Psi-delta*Psi)+(beta-delta)*(4.0*IaA0*beta-2.0*(1.0+V0)*Psi+IaA0*(1.0+delta)*(-1.0-delta+Psi))))+exp((-1.0)*(1.0 / 2.0) * (t-t0) * (1.0-delta+Psi))*(IdA0*beta*(beta-delta)*(1.0+2.0*delta+pow(delta,2.0)-Psi+delta*Psi+2.0*beta*(-2.0+Psi))+(pow(beta,2.0)-delta+beta*delta)*(alpha*(1.0-4.0*beta+2.0*delta+pow(delta,2.0)-Psi+delta*Psi)-(beta-delta)*(-4.0*IaA0*beta-2.0*(1.0+V0)*Psi+IaA0*(1.0+delta)*(1.0+delta+Psi)))))/(2.0*(beta-delta)*(pow(beta,2.0)+(-1.0+beta)*delta)*(4.0*beta-pow((1.0+delta),2.0)));
 
     // double to_return = (-2.0 * alpha * V_.AA_1 + IdA0 * V_.AA_2 + V_.AA_3 * (-IdA0 * beta * (beta - delta) * V_.AA_4 + V_.AA_5 * (alpha * V_.AA_6 + (beta - delta) * (4.0 * IaA0 * beta -2.0 * (1.0 + V0) * Psi + IaA0 * V_.AA_7))) + V_.AA_8 * (IdA0 * V_.AA_9 + V_.AA_10 * (alpha * V_.AA_11 - (beta-delta) * (-4.0 * IaA0 * beta - 2.0*(1.0+V0)*Psi+IaA0*(1.0+delta)*(1.0+delta+Psi)))))/ V_.AA_12;
@@ -597,239 +600,242 @@ namespace nest
   migliore::update( Time const& origin, const long from, const long to )
   {
     //assert( to >= 0 && ( delay ) from < kernel().connection_manager.get_min_delay() );
-	  assert( from < to );
+    assert( from < to );
 
-	  double t0_val = origin.get_ms() / V_.time_scale_;
-	  double absolute_time = origin.get_ms();
-	  double local_time_step = V_.dt;// / (to - 1);
-	  double t_final = t0_val + local_time_step;
-
+    double t0_val = origin.get_ms() / V_.time_scale_;
+    double absolute_time;
+    double local_time_step = V_.dt;// / (to - 1);
+    double t_final = t0_val + local_time_step;
 	  
-	  double v_ini = set_v_ini(S_.V_m_ / V_.Vconvfact,S_.r_ref_, V_.vrm);
-	  double vini_prec = v_ini;
-	  double teta;
-	  double c_aux;
-	  double currCoeff;
-	  // int counter = S_.sis_;
-	  // double timer = origin.get_ms() ;
-	  // double current;
-	  // double vmss, timess;
-	  double paramL_;
-	  double input_spike;
 	  
-	  // evolve from timestep 'from' to timestep 'to' with steps of h each
-	  for ( long lag = from; lag < to; ++lag )
+    double v_ini = set_v_ini(S_.V_m_ / V_.Vconvfact,S_.r_ref_, V_.vrm);
+    double vini_prec = v_ini;
+    double teta;
+    double c_aux;
+    double currCoeff;
+    // int counter = S_.sis_;
+    // double timer = origin.get_ms() ;
+    // double current;
+    // double vmss, timess;
+    double paramL_;
+    double input_spike;
+	  
+    // evolve from timestep 'from' to timestep 'to' with steps of h each
+    for ( long lag = from; lag < to; ++lag )
+      {
+	// std::cout << "Idep " << S_.Idep_ini_ << " \n";
+	// std::cout << "Iadap " << S_.Iadap_ini_ << " \n";
+	double corpre = S_.current_; // + S_.I;
+	// set new input current
+	S_.I_inj_ = B_.currents_.get_value( lag );
+	S_.current_ = S_.I_inj_; // + S_.I;
+		  	
+	// Update synaptic currents
+	// if ( S_.r_ref_ == 0 )
+	//   {
+	// neuron not refractory, so evolve add synaptic currents
+	for ( size_t i = 0; i < P_.n_receptors_(); i++ )
 	  {
-	    std::cout << "Idep " << S_.Idep_ini_ << " \n";
-	    std::cout << "Iadap " << S_.Iadap_ini_ << " \n";
-		  double corpre = S_.current_; // + S_.I;
-		  // set new input current
-		  S_.I_inj_ = B_.currents_.get_value( lag );
-		  S_.current_ = S_.I_inj_; // + S_.I;
-		  // Update synaptic currents
-		  // if ( S_.r_ref_ == 0 )
-		  //   {
-		      // neuron not refractory, so evolve add synaptic currents
-		      for ( size_t i = 0; i < P_.n_receptors_(); i++ )
-			{
-			  // S_.V_m_ += V_.P21_syn_[ i ] * S_.i_syn_[ i ];
-			  S_.current_ += S_.i_syn_[ i ];
-			}
-		    // }
-		  for ( size_t i = 0; i < P_.n_receptors_(); i++ )
-		    {
-		      // exponential decaying PSCs
-		      S_.i_syn_fast_[ i ] *= V_.P11_syn_fast_[ i ];
-		      S_.i_syn_slow_[ i ] *= V_.P11_syn_slow_[ i ];
-		      // collect spikes
-		      input_spike = B_.spikes_[ i ].get_value( lag );
-		      S_.i_syn_fast_[ i ] += input_spike; // not sure about this
-		      if ( i == 0 )
-			{
-			  if (S_.i_syn_slow_[ i ] < 0) {
-			    std::cout << S_.i_syn_slow_[ i ] << "\n";
-			  }
-			  S_.i_syn_slow_[ i ] += input_spike * P_.NMDA_ratio_ * mgblock(S_.V_m_); // not sure about this
-			}
-		      S_.i_syn_[ i ] = S_.i_syn_fast_[ i ] + S_.i_syn_slow_[ i ];
-		    }
-		  // current = S_.current_;
-		  // vmss = S_.V_m_;
-		  // timess = t_final * V_.time_scale_;
-		  t0_val = t_final;
-		  t_final = t0_val + local_time_step ;//Time::step( origin.get_steps() + lag + 1 );
-		  if ((t_final-S_.init_sign_)*V_.time_scale_ >= nest::migliore::tagliorette(S_.current_))
-		  {
-		    if (S_.current_ > P_.I_th_)
-		      {
-		      if (corpre < P_.I_th_ || S_.sis_ == 0){
-		    	  S_.init_sign_ = t_final;
-			S_.Idep_ini_ = std::max(P_.Idep_ini_vr_, P_.cost_idep_ini_*(S_.current_ - P_.I_th_));
-			S_.Iadap_ini_ = 0;
+	    // S_.V_m_ += V_.P21_syn_[ i ] * S_.i_syn_[ i ];
+	    S_.current_ += S_.i_syn_[ i ];
+	  }
+	// }
+	for ( size_t i = 0; i < P_.n_receptors_(); i++ )
+	  {
+	    // exponential decaying PSCs
+	    S_.i_syn_fast_[ i ] *= V_.P11_syn_fast_[ i ];
+	    S_.i_syn_slow_[ i ] *= V_.P11_syn_slow_[ i ];
+	    // collect spikes
+	    input_spike = B_.spikes_[ i ].get_value( lag );
+	    S_.i_syn_fast_[ i ] += input_spike; // not sure about this
+	    if ( i == 0 )
+	      {
+		if (S_.i_syn_slow_[ i ] < 0) {
+		  std::cout << S_.i_syn_slow_[ i ] << "\n";
+		}
+		S_.i_syn_slow_[ i ] += input_spike * P_.NMDA_ratio_ * mgblock(S_.V_m_); // not sure about this
+	      }
+	    S_.i_syn_[ i ] = S_.i_syn_fast_[ i ] + S_.i_syn_slow_[ i ];
+	  }
+	// current = S_.current_;
+	// vmss = S_.V_m_;
+	// timess = t_final * V_.time_scale_;
+	t0_val = t_final;
+	t_final = t0_val + local_time_step ;//Time::step( origin.get_steps() + lag + 1 );
+	absolute_time = ( origin.get_steps() + lag) * V_.d_dt;
+	std::cout << "Atime " << absolute_time << " \n";
+	if ((t_final-S_.init_sign_)*V_.time_scale_ >= nest::migliore::tagliorette(S_.current_))
+	  {
+	    if (S_.current_ > P_.I_th_)
+	      {
+		if (corpre < P_.I_th_ || S_.sis_ == 0){
+		  S_.init_sign_ = t_final;
+		  S_.Idep_ini_ = std::max(P_.Idep_ini_vr_, P_.cost_idep_ini_*(S_.current_ - P_.I_th_));
+		  S_.Iadap_ini_ = 0;
 
-			currCoeff = (S_.current_ - P_.I_th_)/S_.current_;
-			v_ini = default_v_ini(currCoeff, S_.current_);
-			v_ini = migliV(t_final, P_.delta1_, V_.psi1,
-				       S_.current_/P_.sc_, P_.bet_, S_.Iadap_ini_, S_.Idep_ini_, t0_val, v_ini, S_.r_ref_, V_.vrm);
-			S_.Iadap_ini_ = Iadap(t_final, P_.delta1_, V_.psi1, S_.current_ / P_.sc_, P_.bet_, S_.Iadap_ini_, S_.Idep_ini_, t0_val, v_ini, S_.r_ref_);
-			S_.Idep_ini_ = Idep(t_final, P_.bet_, S_.Idep_ini_, t0_val, S_.r_ref_);
-		      }
-		    }
-		    if (corpre == 0) {
-		      v_ini = set_v_ini(vini_prec, S_.r_ref_, V_.vrm);
-		    } else
-		      {
-			if (S_.current_ < P_.I_th_ && S_.current_ > 0) {currCoeff = 0;}
-			else if (S_.current_<=0) {currCoeff = 1;}
-			else
-			  { currCoeff = (S_.current_ - P_.I_th_)/S_.current_;}
-			v_ini = default_v_ini(currCoeff, S_.current_);
-		      }
-		    vini_prec = v_ini;
-		  } else {
-		    vini_prec = v_ini;
-		    if ((S_.current_ < P_.I_th_ && S_.current_ >= 0) || S_.sis_ == 0)
-		      {
-			currCoeff = 0;
-			v_ini = default_v_ini(currCoeff, S_.current_);
-		    } else{
-		      if ( V_.out.size() > 2 && S_.current_ < corpre && S_.current_ > 0 && ((V_.t_spk + 2 * V_.d_dt) < t_final * V_.time_scale_)) {
-			teta = (V_.out[V_.out.size()-1] / (corpre / P_.sc_)) * (1/V_.dt-P_.delta1_)
-			  -(V_.out[V_.out.size()-2] / ((corpre / P_.sc_)*V_.dt))
-			  -P_.delta1_ / (corpre / P_.sc_) -1;
-			if (teta < 0) {teta = 0;}
-			S_.Idep_ini_ = S_.Iadap_ini_ + teta * (S_.current_/ P_.sc_) / P_.bet_;
-			v_ini = migliV(t_final, P_.delta1_, V_.psi1,
-				       S_.current_/P_.sc_, P_.bet_,
-				       S_.Iadap_ini_, S_.Idep_ini_,
-				       t0_val, v_ini, S_.r_ref_, V_.vrm);
-			S_.Iadap_ini_ = Iadap(t_final, P_.delta1_, V_.psi1,
-					      S_.current_ / P_.sc_, P_.bet_, S_.Iadap_ini_,
-					      S_.Idep_ini_, t0_val, v_ini, S_.r_ref_);
-			S_.Idep_ini_ = Idep(t_final, P_.bet_, S_.Idep_ini_, t0_val, S_.r_ref_);
-			std::cout << "Teta " << teta << "\n";
-		      } else {
-			if (S_.current_ > 0) {
-			  v_ini = migliV(t_final, P_.delta1_, V_.psi1,
-					 S_.current_/P_.sc_, P_.bet_,
-					 S_.Iadap_ini_, S_.Idep_ini_,
-					 t0_val, v_ini, S_.r_ref_, V_.vrm);
-			  if (v_ini * V_.Vconvfact < P_.V_min_){
-			    std::cout << "1Reset V_min " << v_ini * V_.Vconvfact << " \n";
-			    std::cout << "Idep* " << S_.Idep_ini_ << " \n";
-			    std::cout << "Iadap* " << S_.Iadap_ini_ << " \n";
-			  }
-			  S_.Iadap_ini_ = Iadap(t_final, P_.delta1_, V_.psi1,
-						S_.current_ / P_.sc_, P_.bet_, S_.Iadap_ini_,
-						S_.Idep_ini_, t0_val, v_ini, S_.r_ref_);
-			  S_.Idep_ini_ = Idep(t_final, P_.bet_, S_.Idep_ini_, t0_val, S_.r_ref_);
-			}
-		      }
-		      if (corpre != S_.current_ && (S_.current_ < 0 && S_.current_ > V_.mincurr))
-			{
-			  v_ini = set_v_ini( vini_prec, S_.r_ref_, V_.vrm);
-			}
-		      if (S_.current_ < 0 && S_.current_ > V_.mincurr)
-			{
-			  currCoeff = 1;
-			  v_ini = default_v_ini(currCoeff, S_.current_);
-			}
-		      if (corpre != S_.current_  && S_.current_ <= V_.mincurr){
-			S_.Iadap_ini_ = -P_.V_min_ / P_.E_L_ + 1;
-			S_.Idep_ini_ = 0;
-			currCoeff = 1;
-			v_ini = default_v_ini(currCoeff, S_.current_);
-		      }
-		      if (S_.current_ <= V_.mincurr) {
-			std::cout << "V_min curr\n";
-			v_ini = V_.V_star_min_;
-		      }
-		    }
-		    if (v_ini * V_.Vconvfact < P_.V_min_){
-		      std::cout << "Reset V_min\n";
-		      v_ini = P_.V_min_ / V_.Vconvfact;
-		      S_.Iadap_ini_ = P_.Iadap_start_;
-		    }
-		  }
-		  if (S_.current_ > P_.I_th_) {
-		    if (corpre < P_.I_th_) {
-		      std::cout << "Reset Iadap\n";
-		      S_.init_sign_ = t_final;
-		      S_.Idep_ini_ = std::max(P_.Idep_ini_vr_, P_.cost_idep_ini_*(S_.current_ - P_.I_th_));
-		      S_.Iadap_ini_ = 0;                
-		      currCoeff = (S_.current_ - P_.I_th_)/S_.current_;
-		      v_ini = default_v_ini(currCoeff, S_.current_);
-		      if (S_.current_<1e-11) {
-			v_ini = -1;
-		      }
-		    }
-		  }
+		  currCoeff = (S_.current_ - P_.I_th_)/S_.current_;
+		  v_ini = default_v_ini(currCoeff, S_.current_);
+		  v_ini = migliV(t_final, P_.delta1_, V_.psi1,
+				 S_.current_/P_.sc_, P_.bet_, S_.Iadap_ini_, S_.Idep_ini_, t0_val, v_ini, S_.r_ref_, V_.vrm);
+		  S_.Iadap_ini_ = Iadap(t_final, P_.delta1_, V_.psi1, S_.current_ / P_.sc_, P_.bet_, S_.Iadap_ini_, S_.Idep_ini_, t0_val, v_ini, S_.r_ref_);
+		  S_.Idep_ini_ = Idep(t_final, P_.bet_, S_.Idep_ini_, t0_val, S_.r_ref_);
+		}
+	      }
+	    if (corpre == 0) {
+	      v_ini = set_v_ini(vini_prec, S_.r_ref_, V_.vrm);
+	    } else
+	      {
+		if (S_.current_ < P_.I_th_ && S_.current_ > 0) {currCoeff = 0;}
+		else if (S_.current_<=0) {currCoeff = 1;}
+		else
+		  { currCoeff = (S_.current_ - P_.I_th_)/S_.current_;}
+		v_ini = default_v_ini(currCoeff, S_.current_);
+	      }
+	    vini_prec = v_ini;
+	  } else {
+	  vini_prec = v_ini;
+	  if ((S_.current_ < P_.I_th_ && S_.current_ >= 0) || S_.sis_ == 0)
+	    {
+	      currCoeff = 0;
+	      v_ini = default_v_ini(currCoeff, S_.current_);
+	    } else{
+	    if ( V_.out.size() > 2 && S_.current_ < corpre && S_.current_ > 0 && ((V_.t_spk + 2 * V_.d_dt) < t_final * V_.time_scale_)) {
+	      teta = (V_.out[V_.out.size()-1] / (corpre / P_.sc_)) * (1/V_.dt-P_.delta1_)
+		-(V_.out[V_.out.size()-2] / ((corpre / P_.sc_)*V_.dt))
+		-P_.delta1_ / (corpre / P_.sc_) -1;
+	      if (teta < 0) {teta = 0;}
+	      S_.Idep_ini_ = S_.Iadap_ini_ + teta * (S_.current_/ P_.sc_) / P_.bet_;
+	      v_ini = migliV(t_final, P_.delta1_, V_.psi1,
+			     S_.current_/P_.sc_, P_.bet_,
+			     S_.Iadap_ini_, S_.Idep_ini_,
+			     t0_val, v_ini, S_.r_ref_, V_.vrm);
+	      S_.Iadap_ini_ = Iadap(t_final, P_.delta1_, V_.psi1,
+				    S_.current_ / P_.sc_, P_.bet_, S_.Iadap_ini_,
+				    S_.Idep_ini_, t0_val, v_ini, S_.r_ref_);
+	      S_.Idep_ini_ = Idep(t_final, P_.bet_, S_.Idep_ini_, t0_val, S_.r_ref_);
+	      std::cout << "Teta " << teta << "\n";
+	    } else {
+	      if (S_.current_ > 0) {
+		v_ini = migliV(t_final, P_.delta1_, V_.psi1,
+			       S_.current_/P_.sc_, P_.bet_,
+			       S_.Iadap_ini_, S_.Idep_ini_,
+			       t0_val, v_ini, S_.r_ref_, V_.vrm);
+		if (v_ini * V_.Vconvfact < P_.V_min_){
+		  std::cout << "1Reset V_min " << v_ini * V_.Vconvfact << " \n";
+		  std::cout << "Idep* " << S_.Idep_ini_ << " \n";
+		  std::cout << "Iadap* " << S_.Iadap_ini_ << " \n";
+		}
+		S_.Iadap_ini_ = Iadap(t_final, P_.delta1_, V_.psi1,
+				      S_.current_ / P_.sc_, P_.bet_, S_.Iadap_ini_,
+				      S_.Idep_ini_, t0_val, v_ini, S_.r_ref_);
+		S_.Idep_ini_ = Idep(t_final, P_.bet_, S_.Idep_ini_, t0_val, S_.r_ref_);
+	      }
+	    }
+	    if (corpre != S_.current_ && (S_.current_ < 0 && S_.current_ > V_.mincurr))
+	      {
+		v_ini = set_v_ini( vini_prec, S_.r_ref_, V_.vrm);
+	      }
+	    if (S_.current_ < 0 && S_.current_ > V_.mincurr)
+	      {
+		currCoeff = 1;
+		v_ini = default_v_ini(currCoeff, S_.current_);
+	      }
+	    if (corpre != S_.current_  && S_.current_ <= V_.mincurr){
+	      S_.Iadap_ini_ = -P_.V_min_ / P_.E_L_ + 1;
+	      S_.Idep_ini_ = 0;
+	      currCoeff = 1;
+	      v_ini = default_v_ini(currCoeff, S_.current_);
+	    }
+	    if (S_.current_ <= V_.mincurr) {
+	      std::cout << "V_min curr\n";
+	      v_ini = V_.V_star_min_;
+	    }
+	  }
+	  if (v_ini * V_.Vconvfact < P_.V_min_){
+	    std::cout << "Reset V_min\n";
+	    v_ini = P_.V_min_ / V_.Vconvfact;
+	    S_.Iadap_ini_ = P_.Iadap_start_;
+	  }
+	}
+	if (S_.current_ > P_.I_th_) {
+	  if (corpre < P_.I_th_) {
+	    std::cout << "Reset Iadap\n";
+	    S_.init_sign_ = t_final;
+	    S_.Idep_ini_ = std::max(P_.Idep_ini_vr_, P_.cost_idep_ini_*(S_.current_ - P_.I_th_));
+	    S_.Iadap_ini_ = 0;                
+	    currCoeff = (S_.current_ - P_.I_th_)/S_.current_;
+	    v_ini = default_v_ini(currCoeff, S_.current_);
+	    if (S_.current_<1e-11) {
+	      v_ini = -1;
+	    }
+	  }
+	}
 
-		  V_.out.push_back(v_ini);
-		  S_.V_m_ = v_ini * V_.Vconvfact;
-		  while (V_.out.size() > 3)
-		  {
-			  V_.out.erase(V_.out.begin());
-		  }
-		  // lower bound of membrane potential REMOVED in 041 version
-		  // S_.V_m_ = ( S_.V_m_ < P_.V_min_ ? P_.V_min_ : S_.V_m_ );
+	V_.out.push_back(v_ini);
+	S_.V_m_ = v_ini * V_.Vconvfact;
+	while (V_.out.size() > 3)
+	  {
+	    V_.out.erase(V_.out.begin());
+	  }
+	// lower bound of membrane potential REMOVED in 041 version
+	// S_.V_m_ = ( S_.V_m_ < P_.V_min_ ? P_.V_min_ : S_.V_m_ );
 
-		  // Count down for refractory period
-		  if (S_.r_ref_ > 0) {--S_.r_ref_;}
+	// Count down for refractory period
+	if (S_.r_ref_ > 0) {--S_.r_ref_;}
 
 
 
 		  
-		  // threshold crossing
-		  if ( S_.V_m_ >= P_.V_th_ )
-		  {
-		    std::cout << "Spike!!!\n";
-			  S_.r_ref_ = V_.RefractoryCounts_; // Inizialize refractory
+	// threshold crossing
+	if ( S_.V_m_ >= P_.V_th_ )
+	  {
+	    std::cout << "Spike!!!\n";
+	    S_.r_ref_ = V_.RefractoryCounts_; // Inizialize refractory
 
-			  V_.t_spk = t_final * V_.time_scale_;
-			  // f.write(str(round(t_spk, 3)) + ' \n')
-			  S_.V_m_ = P_.Vres_; // -65
-			  v_ini = V_.vrm;
-			  c_aux = P_.c_;
-			  if (S_.current_ < P_.istim_min_spikinig_exp_ || S_.current_ > P_.istim_max_spikinig_exp_)
-			    {
-			      c_aux = P_.c_;
-			      S_.Iadap_ini_ = monod((t_final-S_.init_sign_) * V_.time_scale_,
-						    P_.a_, P_.b_ * S_.current_/1000, P_.c_, P_.alp_);
-			    } else {
-			    // orig parameters
-			    S_.Iadap_ini_ = monod((t_final - S_.init_sign_) * V_.time_scale_, P_.a_, P_.b_ * S_.current_ / 1000, P_.c_, P_.alp_);
-			    // print('Iadap_ini: ',Iadap_ini)
-			    if (S_.Iadap_ini_<0) {
-			      // print('monod negativa')
-			      //sinapt
-			      paramL_ = S_.Iadap_ini_;
-			      if (P_.a_ > 0) {
-				c_aux = P_.c_ - paramL_;
-			      } else {
-                                c_aux = -P_.a_ * exp(P_.b_ * S_.current_ / 1000);
-			      }
-			      S_.Iadap_ini_ = monod((t_final-S_.init_sign_) * V_.time_scale_, P_.a_, P_.b_ * S_.current_/1000, c_aux, P_.alp_);
-			    }
-			  }
+	    V_.t_spk = t_final * V_.time_scale_;
+	    // f.write(str(round(t_spk, 3)) + ' \n')
+	    S_.V_m_ = P_.Vres_; // -65
+	    v_ini = V_.vrm;
+	    c_aux = P_.c_;
+	    if (S_.current_ < P_.istim_min_spikinig_exp_ || S_.current_ > P_.istim_max_spikinig_exp_)
+	      {
+		c_aux = P_.c_;
+		S_.Iadap_ini_ = monod((t_final-S_.init_sign_) * V_.time_scale_,
+				      P_.a_, P_.b_ * S_.current_/1000, P_.c_, P_.alp_);
+	      } else {
+	      // orig parameters
+	      S_.Iadap_ini_ = monod((t_final - S_.init_sign_) * V_.time_scale_, P_.a_, P_.b_ * S_.current_ / 1000, P_.c_, P_.alp_);
+	      // print('Iadap_ini: ',Iadap_ini)
+	      if (S_.Iadap_ini_<0) {
+		// print('monod negativa')
+		//sinapt
+		paramL_ = S_.Iadap_ini_;
+		if (P_.a_ > 0) {
+		  c_aux = P_.c_ - paramL_;
+		} else {
+		  c_aux = -P_.a_ * exp(P_.b_ * S_.current_ / 1000);
+		}
+		S_.Iadap_ini_ = monod((t_final-S_.init_sign_) * V_.time_scale_, P_.a_, P_.b_ * S_.current_/1000, c_aux, P_.alp_);
+	      }
+	    }
 			  
-			  if (S_.current_ < P_.I_th_) {
-			    S_.Idep_ini_ = 0;
-			    S_.Iadap_ini_ = P_.Iadap_start_;
-			  } else {
-			    S_.Idep_ini_ = P_.Idep_ini_vr_;
-			  }
+	    if (S_.current_ < P_.I_th_) {
+	      S_.Idep_ini_ = 0;
+	      S_.Iadap_ini_ = P_.Iadap_start_;
+	    } else {
+	      S_.Idep_ini_ = P_.Idep_ini_vr_;
+	    }
 
-			  // compute spike time
-			  set_spiketime( Time::step( origin.get_steps() + lag + 1 ) );
+	    // compute spike time
+	    set_spiketime( Time::step( origin.get_steps() + lag + 1 ) );
 
-			  SpikeEvent se;
-			  kernel().event_delivery_manager.send( *this, se, lag );
-		  }
-		  // voltage logging
-		  B_.logger_.record_data( origin.get_steps() + lag );
+	    SpikeEvent se;
+	    kernel().event_delivery_manager.send( *this, se, lag );
 	  }
-	  S_.sis_++;
+	// voltage logging
+	B_.logger_.record_data( origin.get_steps() + lag );
+      }
+    S_.sis_++;
   }
 
 
@@ -848,68 +854,68 @@ namespace nest
   void
   migliore::handle( SpikeEvent& e )
   {
-	  assert( e.get_delay_steps() > 0 );
-	  B_.spikes_[ e.get_rport() - 1 ].add_value(
-			  e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ), e.get_weight() * e.get_multiplicity() );
-	  //    B_.spikes_.add_value(
-	  //			 e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ), e.get_weight() * e.get_multiplicity() );
+    assert( e.get_delay_steps() > 0 );
+    B_.spikes_[ e.get_rport() - 1 ].add_value(
+					      e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ), e.get_weight() * e.get_multiplicity() );
+    //    B_.spikes_.add_value(
+    //			 e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ), e.get_weight() * e.get_multiplicity() );
   }
 
   void
   migliore::handle( CurrentEvent& e )
   {
-	  assert( e.get_delay_steps() > 0 );
+    assert( e.get_delay_steps() > 0 );
 
-	  const double c = e.get_current();
-	  const double w = e.get_weight();
-	  B_.currents_.add_value( e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ), w * c );
+    const double c = e.get_current();
+    const double w = e.get_weight();
+    B_.currents_.add_value( e.get_rel_delivery_steps( kernel().simulation_manager.get_slice_origin() ), w * c );
   }
 
   void
   migliore::handle( DataLoggingRequest& e )
   {
-	  B_.logger_.handle( e );
+    B_.logger_.handle( e );
   }
 
 
-inline void
-migliore::set_status( const DictionaryDatum& d )
-{
-  Parameters_ ptmp = P_;     // temporary copy in case of errors
-  ptmp.set( d, this );       // throws if BadProperty
-  State_ stmp = S_;          // temporary copy in case of errors
-  stmp.set( d, ptmp, this ); // throws if BadProperty
-
-  // We now know that (ptmp, stmp) are consistent. We do not
-  // write them back to (P_, S_) before we are also sure that
-  // the properties to be set in the parent class are internally
-  // consistent.
-  ArchivingNode::set_status( d );
-
-  /*
-   * Here is where we must update the recordablesMap_ if new receptors
-   * are added!
-   */
-  if ( ptmp.tau_syn_.size() > P_.tau_syn_.size() ) // Number of receptors increased
+  inline void
+  migliore::set_status( const DictionaryDatum& d )
   {
-    for ( size_t i_syn = P_.tau_syn_.size(); i_syn < ptmp.tau_syn_.size(); ++i_syn )
-    {
-      size_t elem = migliore::State_::I_SYN
-        + i_syn * migliore::State_::NUM_STATE_ELEMENTS_PER_RECEPTOR;
-      recordablesMap_.insert( get_i_syn_name( i_syn ), get_data_access_functor( elem ) );
-    }
-  }
-  else if ( ptmp.tau_syn_.size() < P_.tau_syn_.size() )
-  { // Number of receptors decreased
-    for ( size_t i_syn = ptmp.tau_syn_.size(); i_syn < P_.tau_syn_.size(); ++i_syn )
-    {
-      recordablesMap_.erase( get_i_syn_name( i_syn ) );
-    }
-  }
+    Parameters_ ptmp = P_;     // temporary copy in case of errors
+    ptmp.set( d, this );       // throws if BadProperty
+    State_ stmp = S_;          // temporary copy in case of errors
+    stmp.set( d, ptmp, this ); // throws if BadProperty
 
-  // if we get here, temporaries contain consistent set of properties
-  P_ = ptmp;
-  S_ = stmp;
-}
+    // We now know that (ptmp, stmp) are consistent. We do not
+    // write them back to (P_, S_) before we are also sure that
+    // the properties to be set in the parent class are internally
+    // consistent.
+    ArchivingNode::set_status( d );
+
+    /*
+     * Here is where we must update the recordablesMap_ if new receptors
+     * are added!
+     */
+    if ( ptmp.tau_syn_.size() > P_.tau_syn_.size() ) // Number of receptors increased
+      {
+	for ( size_t i_syn = P_.tau_syn_.size(); i_syn < ptmp.tau_syn_.size(); ++i_syn )
+	  {
+	    size_t elem = migliore::State_::I_SYN
+	      + i_syn * migliore::State_::NUM_STATE_ELEMENTS_PER_RECEPTOR;
+	    recordablesMap_.insert( get_i_syn_name( i_syn ), get_data_access_functor( elem ) );
+	  }
+      }
+    else if ( ptmp.tau_syn_.size() < P_.tau_syn_.size() )
+      { // Number of receptors decreased
+	for ( size_t i_syn = ptmp.tau_syn_.size(); i_syn < P_.tau_syn_.size(); ++i_syn )
+	  {
+	    recordablesMap_.erase( get_i_syn_name( i_syn ) );
+	  }
+      }
+
+    // if we get here, temporaries contain consistent set of properties
+    P_ = ptmp;
+    S_ = stmp;
+  }
   
 } // namespace
