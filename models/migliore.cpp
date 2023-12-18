@@ -600,6 +600,7 @@ namespace nest
 	  assert( from < to );
 
 	  double t0_val = origin.get_ms() / V_.time_scale_;
+	  double absolute_time = origin.get_ms();
 	  double local_time_step = V_.dt;// / (to - 1);
 	  double t_final = t0_val + local_time_step;
 
@@ -619,6 +620,8 @@ namespace nest
 	  // evolve from timestep 'from' to timestep 'to' with steps of h each
 	  for ( long lag = from; lag < to; ++lag )
 	  {
+	    std::cout << "Idep " << S_.Idep_ini_ << " \n";
+	    std::cout << "Iadap " << S_.Iadap_ini_ << " \n";
 		  double corpre = S_.current_; // + S_.I;
 		  // set new input current
 		  S_.I_inj_ = B_.currents_.get_value( lag );
@@ -704,12 +707,18 @@ namespace nest
 					      S_.current_ / P_.sc_, P_.bet_, S_.Iadap_ini_,
 					      S_.Idep_ini_, t0_val, v_ini, S_.r_ref_);
 			S_.Idep_ini_ = Idep(t_final, P_.bet_, S_.Idep_ini_, t0_val, S_.r_ref_);
+			std::cout << "Teta " << teta << "\n";
 		      } else {
 			if (S_.current_ > 0) {
 			  v_ini = migliV(t_final, P_.delta1_, V_.psi1,
 					 S_.current_/P_.sc_, P_.bet_,
 					 S_.Iadap_ini_, S_.Idep_ini_,
 					 t0_val, v_ini, S_.r_ref_, V_.vrm);
+			  if (v_ini * V_.Vconvfact < P_.V_min_){
+			    std::cout << "1Reset V_min " << v_ini * V_.Vconvfact << " \n";
+			    std::cout << "Idep* " << S_.Idep_ini_ << " \n";
+			    std::cout << "Iadap* " << S_.Iadap_ini_ << " \n";
+			  }
 			  S_.Iadap_ini_ = Iadap(t_final, P_.delta1_, V_.psi1,
 						S_.current_ / P_.sc_, P_.bet_, S_.Iadap_ini_,
 						S_.Idep_ini_, t0_val, v_ini, S_.r_ref_);
@@ -732,16 +741,19 @@ namespace nest
 			v_ini = default_v_ini(currCoeff, S_.current_);
 		      }
 		      if (S_.current_ <= V_.mincurr) {
+			std::cout << "V_min curr\n";
 			v_ini = V_.V_star_min_;
 		      }
 		    }
 		    if (v_ini * V_.Vconvfact < P_.V_min_){
+		      std::cout << "Reset V_min\n";
 		      v_ini = P_.V_min_ / V_.Vconvfact;
 		      S_.Iadap_ini_ = P_.Iadap_start_;
 		    }
 		  }
 		  if (S_.current_ > P_.I_th_) {
 		    if (corpre < P_.I_th_) {
+		      std::cout << "Reset Iadap\n";
 		      S_.init_sign_ = t_final;
 		      S_.Idep_ini_ = std::max(P_.Idep_ini_vr_, P_.cost_idep_ini_*(S_.current_ - P_.I_th_));
 		      S_.Iadap_ini_ = 0;                
@@ -771,6 +783,7 @@ namespace nest
 		  // threshold crossing
 		  if ( S_.V_m_ >= P_.V_th_ )
 		  {
+		    std::cout << "Spike!!!\n";
 			  S_.r_ref_ = V_.RefractoryCounts_; // Inizialize refractory
 
 			  V_.t_spk = t_final * V_.time_scale_;
