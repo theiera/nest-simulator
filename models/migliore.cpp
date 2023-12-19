@@ -631,15 +631,6 @@ namespace nest
 	S_.current_ = S_.I_inj_; // + S_.I;
 		  	
 	// Update synaptic currents
-	// if ( S_.r_ref_ == 0 )
-	//   {
-	// neuron not refractory, so evolve add synaptic currents
-	for ( size_t i = 0; i < P_.n_receptors_(); i++ )
-	  {
-	    // S_.V_m_ += V_.P21_syn_[ i ] * S_.i_syn_[ i ];
-	    S_.current_ += S_.i_syn_[ i ];
-	  }
-	// }
 	for ( size_t i = 0; i < P_.n_receptors_(); i++ )
 	  {
 	    // exponential decaying PSCs
@@ -657,6 +648,16 @@ namespace nest
 	      }
 	    S_.i_syn_[ i ] = S_.i_syn_fast_[ i ] + S_.i_syn_slow_[ i ];
 	  }
+	// Sum Injected and synaptic currents
+	// if ( S_.r_ref_ == 0 )
+	//   {
+	// neuron not refractory, so evolve add synaptic currents
+	for ( size_t i = 0; i < P_.n_receptors_(); i++ )
+	  {
+	    // S_.V_m_ += V_.P21_syn_[ i ] * S_.i_syn_[ i ];
+	    S_.current_ += S_.i_syn_[ i ];
+	  }
+	// }
 	// current = S_.current_;
 	// vmss = S_.V_m_;
 	// timess = t_final * V_.time_scale_;
@@ -692,6 +693,15 @@ namespace nest
 		v_ini = default_v_ini(currCoeff, S_.current_);
 	      }
 	    vini_prec = v_ini;
+	    V_.out.push_back(v_ini);
+	    S_.V_m_ = v_ini * V_.Vconvfact;
+	    while (V_.out.size() > 3)
+	      {
+		V_.out.erase(V_.out.begin());
+	      }
+	    // Count down for refractory period
+	    if (S_.r_ref_ > 0) {--S_.r_ref_;}
+	    
 	  } else {
 	  vini_prec = v_ini;
 	  if ((S_.current_ < P_.I_th_ && S_.current_ >= 0) || S_.sis_ == 0)
@@ -756,7 +766,19 @@ namespace nest
 	    v_ini = P_.V_min_ / V_.Vconvfact;
 	    S_.Iadap_ini_ = P_.Iadap_start_;
 	  }
-	}
+
+	V_.out.push_back(v_ini);
+	S_.V_m_ = v_ini * V_.Vconvfact;
+	while (V_.out.size() > 3)
+	  {
+	    V_.out.erase(V_.out.begin());
+	  }
+	// lower bound of membrane potential REMOVED in 041 version
+	// S_.V_m_ = ( S_.V_m_ < P_.V_min_ ? P_.V_min_ : S_.V_m_ );
+
+	// Count down for refractory period
+	if (S_.r_ref_ > 0) {--S_.r_ref_;}
+
 	if (S_.current_ > P_.I_th_) {
 	  if (corpre < P_.I_th_) {
 	    std::cout << "Reset Iadap\n";
@@ -771,21 +793,6 @@ namespace nest
 	  }
 	}
 
-	V_.out.push_back(v_ini);
-	S_.V_m_ = v_ini * V_.Vconvfact;
-	while (V_.out.size() > 3)
-	  {
-	    V_.out.erase(V_.out.begin());
-	  }
-	// lower bound of membrane potential REMOVED in 041 version
-	// S_.V_m_ = ( S_.V_m_ < P_.V_min_ ? P_.V_min_ : S_.V_m_ );
-
-	// Count down for refractory period
-	if (S_.r_ref_ > 0) {--S_.r_ref_;}
-
-
-
-		  
 	// threshold crossing
 	if ( S_.V_m_ >= P_.V_th_ )
 	  {
@@ -832,6 +839,7 @@ namespace nest
 	    SpikeEvent se;
 	    kernel().event_delivery_manager.send( *this, se, lag );
 	  }
+	}
 	// voltage logging
 	B_.logger_.record_data( origin.get_steps() + lag );
       }
