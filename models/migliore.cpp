@@ -642,17 +642,8 @@ namespace nest
 		S_.i_syn_slow_[ i ] += input_spike * P_.NMDA_ratio_ * mgblock(S_.V_m_); // not sure about this
 	      }
 	    S_.i_syn_[ i ] = S_.i_syn_fast_[ i ] + S_.i_syn_slow_[ i ];
+	    S_.current_ =  S_.current_ + S_.i_syn_[ i ];
 	  }
-	// Sum Injected and synaptic currents
-	// if ( S_.r_ref_ == 0 )
-	//   {
-	// neuron not refractory, so evolve add synaptic currents
-	for ( size_t i = 0; i < P_.n_receptors_(); i++ )
-	  {
-	    // S_.V_m_ += V_.P21_syn_[ i ] * S_.i_syn_[ i ];
-	    S_.current_ += S_.i_syn_[ i ];
-	  }
-	// }
 	// current = S_.current_;
 	// vmss = S_.V_m_;
 	// timess = t_final * V_.time_scale_;
