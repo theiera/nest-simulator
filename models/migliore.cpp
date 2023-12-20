@@ -642,7 +642,9 @@ namespace nest
 		S_.i_syn_slow_[ i ] += input_spike * P_.NMDA_ratio_ * mgblock(S_.V_m_); // not sure about this
 	      }
 	    S_.i_syn_[ i ] = S_.i_syn_fast_[ i ] + S_.i_syn_slow_[ i ];
+	    std::cout << "current pre " << S_.current_<< "\n";
 	    S_.current_ =  S_.current_ + S_.i_syn_[ i ];
+	    std::cout << "current post " << S_.current_<< "\n";
 	  }
 	// current = S_.current_;
 	// vmss = S_.V_m_;
