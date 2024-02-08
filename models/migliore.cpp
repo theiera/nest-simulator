@@ -630,7 +630,7 @@ namespace nest
 		  	
         for ( size_t i = 0; i < P_.n_receptors_(); i++ )
           {
-            S_.current_ =  S_.current_ + S_.i_syn_[ i ];
+            S_.current_ =  S_.current_ + S_.i_syn_[ i ] + P_.I_e_;
           }
 	// Update synaptic currents
 	for ( size_t i = 0; i < P_.n_receptors_(); i++ )
@@ -689,7 +689,10 @@ namespace nest
 	      }
 	    // Count down for refractory period
 	    if (S_.r_ref_ > 0) {--S_.r_ref_;}
-	    
+
+	    // voltage logging
+	    B_.logger_.record_data( origin.get_steps() + lag );
+
 	  } else {
 	  vini_prec = v_ini;
 	  if ((S_.current_ < P_.I_th_ && S_.current_ >= 0) || S_.sis_ == 0)
@@ -775,6 +778,10 @@ namespace nest
 	// threshold crossing
 	if ( S_.V_m_ >= P_.V_th_ )
 	  {
+	    S_.V_m_ = P_.V_th_;
+	    // voltage logging
+	    B_.logger_.record_data( origin.get_steps() + lag );
+
 	    S_.r_ref_ = V_.RefractoryCounts_; // Inizialize refractory
 
 	    V_.t_spk = t_final * V_.time_scale_;
@@ -817,9 +824,14 @@ namespace nest
 	    SpikeEvent se;
 	    kernel().event_delivery_manager.send( *this, se, lag );
 	  }
+	else
+	  {
+	  // voltage logging
+	  B_.logger_.record_data( origin.get_steps() + lag );
+	  }
 	}
-	// voltage logging
-	B_.logger_.record_data( origin.get_steps() + lag );
+	// // voltage logging
+	// B_.logger_.record_data( origin.get_steps() + lag );
       }
     S_.sis_++;
   }
