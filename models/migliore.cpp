@@ -630,8 +630,9 @@ namespace nest
 		  	
         for ( size_t i = 0; i < P_.n_receptors_(); i++ )
           {
-            S_.current_ =  S_.current_ + S_.i_syn_[ i ] + P_.I_e_;
+            S_.current_ =  S_.current_ + S_.i_syn_[ i ];
           }
+	S_.current_ =  S_.current_ + P_.I_e_;
 	// Update synaptic currents
 	for ( size_t i = 0; i < P_.n_receptors_(); i++ )
 	  {
