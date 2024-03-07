@@ -625,6 +625,7 @@ namespace nest
       {
 	double corpre = S_.current_; // + S_.I;
 	// set new input current
+	S_.current_ = 0.0;
 	S_.I_inj_ = B_.currents_.get_value( lag );
 	S_.current_ = S_.I_inj_; // + S_.I;
 		  	
