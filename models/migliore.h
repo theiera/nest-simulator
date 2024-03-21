@@ -213,7 +213,10 @@ private:
     double Iadap_start_;
     double istim_min_spikinig_exp_;
     double istim_max_spikinig_exp_;
-    double tau_syn_NMDA_;
+    // double tau_syn_fast_rise_;
+    // double tau_syn_fast_decay_;
+    // double tau_syn_slow_rise_;
+    // double tau_syn_slow_decay_;
     double NMDA_ratio_;
     double mg_;
     double mg_ref_;
@@ -226,7 +229,11 @@ private:
     double t_ref_;
 
     /** Time constants of synaptic currents in ms. */
-    std::vector< double > tau_syn_;
+    // std::vector< double > tau_syn_;
+    std::vector< double >  tau_syn_fast_rise_;
+    std::vector< double >  tau_syn_fast_decay_;
+    std::vector< double >  tau_syn_slow_rise_;
+    std::vector< double >  tau_syn_slow_decay_;
 
     // boolean flag which indicates whether the neuron has connections
     bool has_connections_;
@@ -268,8 +275,10 @@ private:
     static const size_t NUM_STATE_ELEMENTS_PER_RECEPTOR = 1;     // I_SYN
 
     std::vector< double > i_syn_;
-    std::vector< double > i_syn_fast_;
-    std::vector< double > i_syn_slow_;
+    std::vector< double > i_syn_fast_rise_A_;
+    std::vector< double > i_syn_fast_decay_B_;
+    std::vector< double > i_syn_slow_rise_A_;
+    std::vector< double > i_syn_slow_decay_B_;
     /** Accumulate spikes arriving during refractory period, discounted for
         decay until end of refractory period.
     */
@@ -311,11 +320,18 @@ private:
   {
 
     // time evolution operator
-    std::vector< double > P11_syn_fast_;
-    std::vector< double > P11_syn_slow_;
+    std::vector< double > P11_syn_fast_rise_;
+    std::vector< double > P11_syn_fast_decay_;
+    std::vector< double > P11_syn_slow_rise_;
+    std::vector< double > P11_syn_slow_decay_;
 //    std::vector< double > P21_syn_;
 //    double P20_;
 //    double P22_;
+
+    std::vector< double > fast_tp_;
+    std::vector< double > slow_tp_;
+    std::vector< double > syn_fast_factor_;
+    std::vector< double > syn_slow_factor_;
 
     int RefractoryCounts_;
 
@@ -430,7 +446,7 @@ private:
 inline size_t
 migliore::Parameters_::n_receptors_() const
 {
-  return tau_syn_.size();
+  return tau_syn_fast_decay_.size();
 }
   
 inline size_t

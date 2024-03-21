@@ -87,7 +87,7 @@ namespace nest
   void
   migliore::insert_current_recordables( size_t first )
   {
-    for ( size_t receptor = first; receptor < P_.tau_syn_.size(); ++receptor )
+    for ( size_t receptor = first; receptor < P_.tau_syn_fast_decay_.size(); ++receptor )
       {
 	size_t elem = migliore::State_::I_SYN
 	  + receptor * migliore::State_::NUM_STATE_ELEMENTS_PER_RECEPTOR;
@@ -129,7 +129,10 @@ namespace nest
     , istim_max_spikinig_exp_( 1000 )
     , I_e_( 0.0 ) // pA
     , t_ref_( 2.0 ) // in ms
-    , tau_syn_( 3.0, 2.0 )  // in ms
+    , tau_syn_fast_rise_ ( 0.1, 0.1 ) // in ms
+    , tau_syn_fast_decay_ ( 3.0, 10.0 ) // in ms
+    , tau_syn_slow_rise_ ( 0.1, 0.1 ) // in ms
+    , tau_syn_slow_decay_ ( 3.0, 10.0 ) // in ms
     , has_connections_( false )
     , mg_( 2.0) // 2 mM in the Johnston et al. 2010, extracellula [MgCl2] = 1 mM in Edelman et al. 2015
     , mgb_k_ ( 0.062 ) // (/mV) Johnston et al. 2010
@@ -149,8 +152,10 @@ namespace nest
     , current_ ( 0.0 )
   {
     i_syn_.clear();
-    i_syn_fast_.clear();
-    i_syn_slow_.clear();
+    i_syn_fast_rise_A_.clear();
+    i_syn_fast_decay_B_.clear();
+    i_syn_slow_rise_A_.clear();
+    i_syn_slow_decay_B_.clear();
   }
 
   /* ----------------------------------------------------------------
@@ -182,7 +187,6 @@ namespace nest
     def< double >( d, names::Iadap_start, Iadap_start_);
     def< double >( d, names::istim_min_spikinig_exp, istim_min_spikinig_exp_);
     def< double >( d, names::istim_max_spikinig_exp, istim_max_spikinig_exp_);
-    def< double >( d, names::tau_syn_NMDA, tau_syn_NMDA_);
     def< double >( d, names::NMDA_ratio, NMDA_ratio_);
     def< double >( d, names::t_ref, t_ref_ );
     def< double >( d, names::mg, mg_ );
@@ -192,8 +196,14 @@ namespace nest
     def< int >( d, names::n_synapses, n_receptors_() );
     def< bool >( d, names::has_connections, has_connections_ );
 
-    ArrayDatum tau_syn_ad( tau_syn_ );
-    def< ArrayDatum >( d, names::tau_syn, tau_syn_ad );
+    ArrayDatum tau_syn_fr_ad( tau_syn_fast_rise_ );
+    ArrayDatum tau_syn_fd_ad( tau_syn_fast_decay_ );
+    ArrayDatum tau_syn_sr_ad( tau_syn_slow_rise_ );
+    ArrayDatum tau_syn_sd_ad( tau_syn_slow_decay_ );
+    def< ArrayDatum >( d, names::tau_syn_fast_rise, tau_syn_fr_ad );
+    def< ArrayDatum >( d, names::tau_syn_fast_decay, tau_syn_fd_ad );
+    def< ArrayDatum >( d, names::tau_syn_slow_rise, tau_syn_sr_ad );
+    def< ArrayDatum >( d, names::tau_syn_slow_decay, tau_syn_sd_ad );
   }
 
   void
@@ -221,7 +231,6 @@ namespace nest
     updateValueParam< double >( d, names::Iadap_start, Iadap_start_, node );
     updateValueParam< double >( d, names::istim_min_spikinig_exp, istim_min_spikinig_exp_, node );
     updateValueParam< double >( d, names::istim_max_spikinig_exp, istim_max_spikinig_exp_, node );
-    updateValueParam< double >( d, names::tau_syn_NMDA, tau_syn_NMDA_, node );
     updateValueParam< double >( d, names::NMDA_ratio, NMDA_ratio_, node );
     updateValueParam< double >( d, names::t_ref, t_ref_, node );
     updateValueParam< double >( d, names::mg, mg_, node );
@@ -234,22 +243,104 @@ namespace nest
       }
 
     const size_t old_n_receptors = this->n_receptors_();
-    if ( updateValue< std::vector< double > >( d, "tau_syn", tau_syn_ ) )
+    if ( updateValue< std::vector< double > >( d, "tau_syn_fast_rise", tau_syn_fast_rise_ ) )
       {
     	if ( this->n_receptors_() != old_n_receptors && has_connections_ == true )
 	  {
 	    throw BadProperty( "The neuron has connections, therefore the number of ports cannot be reduced." );
 	  }
-	for ( size_t i = 0; i < tau_syn_.size(); ++i )
+	for ( size_t i = 0; i < tau_syn_fast_rise_.size(); ++i )
 	  {
-	    if ( tau_syn_[ i ] <= 0 )
+	    if ( tau_syn_fast_rise_[ i ] <= 0 )
 	      {
 	    	throw BadProperty( "All synaptic time constants must be strictly positive." );
 	      }
-	    if ( tau_syn_[ i ] == tao_m_ )
+	    if ( tau_syn_fast_rise_[ i ] == tao_m_ )
 	      {
 	    	throw BadProperty( "Membrane and synapse time constant(s) must differ. See note in documentation." );
 	      }
+	  }
+      }
+    else
+      {
+    	if ( this->n_receptors_() != old_n_receptors )
+	  {
+	    throw BadProperty( "All synaptic time constants must defined. Set time constants for tau_syn_fast_rise." );
+	  }
+      }
+    if ( updateValue< std::vector< double > >( d, "tau_syn_fast_decay", tau_syn_fast_decay_ ) )
+      {
+    	if ( this->n_receptors_() != old_n_receptors && has_connections_ == true )
+	  {
+	    throw BadProperty( "The neuron has connections, therefore the number of ports cannot be reduced." );
+	  }
+	for ( size_t i = 0; i < tau_syn_fast_decay_.size(); ++i )
+	  {
+	    if ( tau_syn_fast_decay_[ i ] <= 0 )
+	      {
+	    	throw BadProperty( "All synaptic time constants must be strictly positive." );
+	      }
+	    if ( tau_syn_fast_decay_[ i ] == tao_m_ )
+	      {
+	    	throw BadProperty( "Membrane and synapse time constant(s) must differ. See note in documentation." );
+	      }
+	  }
+      }
+    else
+      {
+    	if ( this->n_receptors_() != old_n_receptors )
+	  {
+	    throw BadProperty( "All synaptic time constants must defined. Set time constants for tau_syn_fast_decay." );
+	  }
+      }
+    if ( updateValue< std::vector< double > >( d, "tau_syn_slow_rise", tau_syn_slow_rise_ ) )
+      {
+    	if ( this->n_receptors_() != old_n_receptors && has_connections_ == true )
+	  {
+	    throw BadProperty( "The neuron has connections, therefore the number of ports cannot be reduced." );
+	  }
+	for ( size_t i = 0; i < tau_syn_slow_rise_.size(); ++i )
+	  {
+	    if ( tau_syn_slow_rise_[ i ] <= 0 )
+	      {
+	    	throw BadProperty( "All synaptic time constants must be strictly positive." );
+	      }
+	    if ( tau_syn_slow_rise_[ i ] == tao_m_ )
+	      {
+	    	throw BadProperty( "Membrane and synapse time constant(s) must differ. See note in documentation." );
+	      }
+	  }
+      }
+    else
+      {
+    	if ( this->n_receptors_() != old_n_receptors )
+	  {
+	    throw BadProperty( "All synaptic time constants must defined. Set time constants for tau_syn_slow_rise." );
+	  }
+      }
+    if ( updateValue< std::vector< double > >( d, "tau_syn_slow_decay", tau_syn_slow_decay_ ) )
+      {
+    	if ( this->n_receptors_() != old_n_receptors && has_connections_ == true )
+	  {
+	    throw BadProperty( "The neuron has connections, therefore the number of ports cannot be reduced." );
+	  }
+	for ( size_t i = 0; i < tau_syn_slow_decay_.size(); ++i )
+	  {
+	    if ( tau_syn_slow_decay_[ i ] <= 0 )
+	      {
+	    	throw BadProperty( "All synaptic time constants must be strictly positive." );
+	      }
+	    if ( tau_syn_slow_decay_[ i ] == tao_m_ )
+	      {
+	    	throw BadProperty( "Membrane and synapse time constant(s) must differ. See note in documentation." );
+	      }
+	  }
+      }
+    else
+      {
+    	if ( this->n_receptors_() != old_n_receptors )
+	  {
+	    throw BadProperty( "All synaptic time constants must defined. Set time constants for tau_syn_slow_decay." );
 	  }
       }
   }
@@ -345,13 +436,21 @@ namespace nest
 
     const double h = Time::get_resolution().get_ms();
 
-    V_.P11_syn_fast_.resize( P_.n_receptors_() );
-    V_.P11_syn_slow_.resize( P_.n_receptors_() );
-    // V_.P21_syn_.resize( P_.n_receptors_() );
+    V_.P11_syn_fast_rise_.resize( P_.n_receptors_() );
+    V_.P11_syn_fast_decay_.resize( P_.n_receptors_() );
+    V_.fast_tp_.resize( P_.n_receptors_() );
+    V_.syn_fast_factor_.resize( P_.n_receptors_() );
 
+    V_.P11_syn_slow_rise_.resize( P_.n_receptors_() );
+    V_.P11_syn_slow_decay_.resize( P_.n_receptors_() );
+    V_.slow_tp_.resize( P_.n_receptors_() );
+    V_.syn_slow_factor_.resize( P_.n_receptors_() );
+    
     S_.i_syn_.resize( P_.n_receptors_() );
-    S_.i_syn_fast_.resize( P_.n_receptors_() );
-    S_.i_syn_slow_.resize( P_.n_receptors_() );
+    S_.i_syn_fast_rise_A_.resize( P_.n_receptors_() );
+    S_.i_syn_fast_decay_B_.resize( P_.n_receptors_() );
+    S_.i_syn_slow_rise_A_.resize( P_.n_receptors_() );
+    S_.i_syn_slow_decay_B_.resize( P_.n_receptors_() );
 
     B_.spikes_.resize( P_.n_receptors_() );
 
@@ -363,20 +462,46 @@ namespace nest
 
     for ( size_t i = 0; i < P_.n_receptors_(); i++ )
       {
-	V_.P11_syn_fast_[ i ] = std::exp( -h / P_.tau_syn_[ i ] );
+	V_.P11_syn_fast_rise_[ i ] = std::exp( -h / P_.tau_syn_fast_rise_[ i ] );
+	V_.P11_syn_fast_decay_[ i ] = std::exp( -h / P_.tau_syn_fast_decay_[ i ] );
 	if (i == 0)
 	  {
-	    V_.P11_syn_slow_[ i ] = std::exp( -h / P_.tau_syn_NMDA_ );
+	    V_.P11_syn_slow_rise_[ i ] = std::exp( -h / P_.tau_syn_slow_rise_[ i ] );
+	    V_.P11_syn_slow_decay_[ i ] = std::exp( -h / P_.tau_syn_slow_decay_[ i ] );
 	  }
 	else
 	  {
-	    V_.P11_syn_slow_[ i ] = 0;
+	    V_.P11_syn_slow_rise_[ i ] = 0;
+	    V_.P11_syn_slow_decay_[ i ] = 0;
 	  }
 	// these are determined according to a numeric stability criterion
-	// V_.P21_syn_[ i ] = propagator_32( P_.tau_syn_[ i ], P_.tao_m_, P_.Cm_, h );
+	// V_.P21_syn_[ i ] = propagator_32( P_.tau_syn_fast_decay_[ i ], P_.tao_m_, P_.Cm_, h );
 	B_.spikes_[ i ].resize();
-      }
+	assert( P_.tau_syn_fast_rise_[ i ] <= P_.tau_syn_fast_decay_[ i ] );
+	assert( P_.tau_syn_slow_rise_[ i ] <= P_.tau_syn_slow_decay_[ i ] );
 
+	if (P_.tau_syn_fast_rise_[ i ] / P_.tau_syn_fast_decay_[ i ] > 0.9999) {
+	  P_.tau_syn_fast_rise_[ i ] = 0.9999 * P_.tau_syn_fast_rise_[ i ];
+	}
+	if (P_.tau_syn_fast_rise_[ i ] / P_.tau_syn_fast_decay_[ i ] < 1e-9) {
+	  P_.tau_syn_fast_rise_[ i ] = P_.tau_syn_fast_decay_[ i ] * 1e-9;
+	}
+    
+	V_.fast_tp_[ i ] = (P_.tau_syn_fast_rise_[ i ] * P_.tau_syn_fast_decay_[ i ]) /
+	  (P_.tau_syn_fast_decay_[ i ] - P_.tau_syn_fast_rise_[ i ]) *
+	  log(P_.tau_syn_fast_decay_[ i ] / P_.tau_syn_fast_rise_[ i ]);
+	V_.syn_fast_factor_[ i ] = -exp(-V_.fast_tp_[ i ] / P_.tau_syn_fast_rise_[ i ]) +
+	  exp(-V_.fast_tp_[ i ] / P_.tau_syn_fast_decay_[ i ]);
+	V_.syn_fast_factor_[ i ] = 1 / V_.syn_fast_factor_[ i ];
+	
+	V_.slow_tp_[ i ] = (P_.tau_syn_slow_rise_[ i ] * P_.tau_syn_slow_decay_[ i ]) /
+	  (P_.tau_syn_slow_decay_[ i ] - P_.tau_syn_slow_rise_[ i ]) *
+	  log(P_.tau_syn_slow_decay_[ i ] / P_.tau_syn_slow_rise_[ i ]);
+	V_.syn_slow_factor_[ i ] = -exp(-V_.slow_tp_[ i ] / P_.tau_syn_slow_rise_[ i ]) +
+	  exp(-V_.slow_tp_[ i ] / P_.tau_syn_slow_decay_[ i ]);
+	V_.syn_slow_factor_[ i ] = 1 / V_.syn_slow_factor_[ i ];
+	
+      }
     V_.RefractoryCounts_ = Time( Time::ms( P_.t_ref_ ) ).get_steps();
     // since t_ref_ >= 0, this can only fail in error
     assert( V_.RefractoryCounts_ >= 0 );
@@ -634,20 +759,30 @@ namespace nest
             S_.current_ =  S_.current_ + S_.i_syn_[ i ];
           }
 	S_.current_ =  S_.current_ + P_.I_e_;
-	// Update synaptic currents
+	//Update synaptic currents
 	for ( size_t i = 0; i < P_.n_receptors_(); i++ )
 	  {
 	    // exponential decaying PSCs
-	    S_.i_syn_fast_[ i ] *= V_.P11_syn_fast_[ i ];
-	    S_.i_syn_slow_[ i ] *= V_.P11_syn_slow_[ i ];
+	    S_.i_syn_fast_rise_A_[ i ] *= V_.P11_syn_fast_rise_[ i ];
+	    S_.i_syn_fast_decay_B_[ i ] *= V_.P11_syn_fast_decay_[ i ];
+	    S_.i_syn_slow_rise_A_[ i ] *= V_.P11_syn_slow_rise_[ i ];
+	    S_.i_syn_slow_decay_B_[ i ] *= V_.P11_syn_slow_decay_[ i ];
 	    // collect spikes
 	    input_spike = B_.spikes_[ i ].get_value( lag );
-	    S_.i_syn_fast_[ i ] += input_spike; // not sure about this
+	    S_.i_syn_fast_rise_A_[ i ] += input_spike * V_.syn_fast_factor_[ i ]; // not sure about this
+	    S_.i_syn_fast_decay_B_[ i ] += input_spike * V_.syn_fast_factor_[ i ]; // not sure about this
 	    if ( i == 0 )
 	      {
-		S_.i_syn_slow_[ i ] += input_spike * P_.NMDA_ratio_ * mgblock(S_.V_m_); // not sure about this
+		S_.i_syn_slow_rise_A_[ i ] += input_spike *
+		  V_.syn_slow_factor_[ i ] *
+		  P_.NMDA_ratio_ *
+		  mgblock(S_.V_m_); // not sure about this
+		S_.i_syn_slow_decay_B_[ i ] += input_spike *
+		  V_.syn_slow_factor_[ i ] *
+		  P_.NMDA_ratio_ *
+		  mgblock(S_.V_m_); // not sure about this
 	      }
-	    S_.i_syn_[ i ] = S_.i_syn_fast_[ i ] + S_.i_syn_slow_[ i ];
+	    S_.i_syn_[ i ] = S_.i_syn_fast_decay_B_[ i ] - S_.i_syn_fast_rise_A_[ i ] + S_.i_syn_slow_decay_B_[ i ] - S_.i_syn_slow_rise_A_[ i ];
 	  }
 	// current = S_.current_;
 	// vmss = S_.V_m_;
@@ -896,18 +1031,18 @@ namespace nest
      * Here is where we must update the recordablesMap_ if new receptors
      * are added!
      */
-    if ( ptmp.tau_syn_.size() > P_.tau_syn_.size() ) // Number of receptors increased
+    if ( ptmp.tau_syn_fast_decay_.size() > P_.tau_syn_fast_decay_.size() ) // Number of receptors increased
       {
-	for ( size_t i_syn = P_.tau_syn_.size(); i_syn < ptmp.tau_syn_.size(); ++i_syn )
+	for ( size_t i_syn = P_.tau_syn_fast_decay_.size(); i_syn < ptmp.tau_syn_fast_decay_.size(); ++i_syn )
 	  {
 	    size_t elem = migliore::State_::I_SYN
 	      + i_syn * migliore::State_::NUM_STATE_ELEMENTS_PER_RECEPTOR;
 	    recordablesMap_.insert( get_i_syn_name( i_syn ), get_data_access_functor( elem ) );
 	  }
       }
-    else if ( ptmp.tau_syn_.size() < P_.tau_syn_.size() )
+    else if ( ptmp.tau_syn_fast_decay_.size() < P_.tau_syn_fast_decay_.size() )
       { // Number of receptors decreased
-	for ( size_t i_syn = ptmp.tau_syn_.size(); i_syn < P_.tau_syn_.size(); ++i_syn )
+	for ( size_t i_syn = ptmp.tau_syn_fast_decay_.size(); i_syn < P_.tau_syn_fast_decay_.size(); ++i_syn )
 	  {
 	    recordablesMap_.erase( get_i_syn_name( i_syn ) );
 	  }
