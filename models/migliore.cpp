@@ -477,8 +477,8 @@ namespace nest
 	// these are determined according to a numeric stability criterion
 	// V_.P21_syn_[ i ] = propagator_32( P_.tau_syn_fast_decay_[ i ], P_.tao_m_, P_.Cm_, h );
 	B_.spikes_[ i ].resize();
-	assert( P_.tau_syn_fast_rise_[ i ] <= P_.tau_syn_fast_decay_[ i ] );
-	assert( P_.tau_syn_slow_rise_[ i ] <= P_.tau_syn_slow_decay_[ i ] );
+	assert( P_.tau_syn_fast_rise_[ i ] < P_.tau_syn_fast_decay_[ i ] );
+	assert( P_.tau_syn_slow_rise_[ i ] < P_.tau_syn_slow_decay_[ i ] );
 
 	if (P_.tau_syn_fast_rise_[ i ] / P_.tau_syn_fast_decay_[ i ] > 0.9999) {
 	  P_.tau_syn_fast_rise_[ i ] = 0.9999 * P_.tau_syn_fast_rise_[ i ];
