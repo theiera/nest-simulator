@@ -138,6 +138,13 @@ namespace nest
     , mgb_k_ ( 0.062 ) // (/mV) Johnston et al. 2010
     , mg_ref_ ( 3.57 ) // (mM) Johnston et al. 2010
     , mgb_shift_ ( 0.0 ) // (mM) Johnston et al. 2010
+    , vinc_inf_ ( 700.0 ) // Default value for the NEURON model
+    , vinc_sup_ ( std::numeric_limits<double>::infinity() ) // Default value for the NEURON model
+    , coeffInf_ ( 0.68 ) // Default value for the NEURON model
+    , constInf_ ( -190.0 ) // Default value for the NEURON model
+    , coeffSup_ ( -0.028 )  // Default value for the NEURON model
+    , constSup_ ( 76.86 ) // Default value for the NEURON model
+    , mincurr_  ( -185.0 ) // Default value for the NEURON model
   {
   }
 
@@ -193,6 +200,16 @@ namespace nest
     def< double >( d, names::mg_ref, mg_ref_ );
     def< double >( d, names::mgb_k, mgb_k_ );
     def< double >( d, names::mgb_shift, mgb_shift_ );
+
+    def< double >( d, names::coeffInf, coeffInf_ );
+    def< double >( d, names::constInf, constInf_ );
+    def< double >( d, names::coeffSup, coeffSup_ );
+    def< double >( d, names::constSup, constSup_ );
+    def< double >( d, names::aglif_p, aglif_p_ );
+    def< double >( d, names::vinc_inf, vinc_inf_ );
+    def< double >( d, names::vinc_sup, vinc_sup_ );
+    def< double >( d, names::mincurr, mincurr_ );
+
     def< int >( d, names::n_synapses, n_receptors_() );
     def< bool >( d, names::has_connections, has_connections_ );
 
@@ -237,6 +254,16 @@ namespace nest
     updateValueParam< double >( d, names::mg_ref, mg_ref_, node );
     updateValueParam< double >( d, names::mgb_k, mgb_k_, node );
     updateValueParam< double >( d, names::mgb_shift, mgb_shift_, node );
+
+    updateValueParam< double >( d, names::coeffInf, coeffInf_, node );
+    updateValueParam< double >( d, names::constInf, constInf_, node );
+    updateValueParam< double >( d, names::coeffSup, coeffSup_, node );
+    updateValueParam< double >( d, names::constSup, constSup_, node );
+    updateValueParam< double >( d, names::aglif_p, aglif_p_, node );
+    updateValueParam< double >( d, names::vinc_inf, vinc_inf_, node );
+    updateValueParam< double >( d, names::vinc_sup, vinc_sup_, node );
+    updateValueParam< double >( d, names::mincurr, mincurr_, node );
+
     if ( t_ref_ < 0 )
       {
     	throw BadProperty( "Refractory time must not be negative." );
@@ -452,6 +479,8 @@ namespace nest
     S_.i_syn_slow_rise_A_.resize( P_.n_receptors_() );
     S_.i_syn_slow_decay_B_.resize( P_.n_receptors_() );
 
+    S_.V_m_ = P_.E_L_;
+
     B_.spikes_.resize( P_.n_receptors_() );
 
     // Initialize states
@@ -515,12 +544,15 @@ namespace nest
     V_.psi1 = pow(-4.0 * P_.bet_ + (pow(1+P_.delta1_,2.0)),0.5);
     V_.t_step = V_.dt;
 
-    V_.mincurr = -185.0;  // THIS SHOULD BE A PARAMETER!!!
+    V_.I_th_ = P_.I_th_ * P_.aglif_p_;
+    V_.Cm_ = P_.Cm_ * P_.aglif_p_;
+    V_.sc_ = P_.sc_ * P_.aglif_p_;
+      
     V_.V_star_min_ = -P_.V_min_ / P_.E_L_;
-    V_.alpha_neg_ = V_.mincurr / P_.sc_;
+    V_.alpha_neg_ = P_.mincurr_ / P_.sc_;
 
     
-    // V_.H = (90+P_.E_L_)*P_.sc_*(P_.bet_-P_.delta1_)/(P_.E_L_*(V_.mincurr));
+    // V_.H = (90+P_.E_L_)*P_.sc_*(P_.bet_-P_.delta1_)/(P_.E_L_*(P_.mincurr_));
     V_.Vconvfact = -P_.E_L_;
     V_.vrm = P_.Vres_/V_.Vconvfact;
     // V_.psi1 = pow((-4)*P_.bet_+pow(1+P_.delta1_,2.0),0.5); // This should substitute P_.psi1_
@@ -580,19 +612,43 @@ namespace nest
   migliore::tagliorette(double corr)
   {
     double dur_sign = std::numeric_limits<double>::infinity();
-    double vinc_inf = 700;
-    if (corr < vinc_inf && corr >= 0)
+    if (corr < P_.vinc_inf_ && corr >= 0)
       {
-    	dur_sign = 0.68 * corr - 190.0;
+    	dur_sign = P_.coeffInf_ * corr + P_.constInf_;
       }
-    double vinc_sup = std::numeric_limits<double>::infinity();
-    if (corr > vinc_sup) // THIS CANNOT HAPPEN!!
+    if (corr > P_.vinc_sup_) // THIS CANNOT HAPPEN!!
       {
-    	dur_sign = 76.86-0.028*corr;
+    	dur_sign = P_.coeffSup_ * corr + P_.constSup_;
       }
     return dur_sign;
   }
 
+// # block lines
+// def tagliorette(corr,retteParParsed):
+//     vinc_sup = retteParParsed[0]
+//     coeffSup = retteParParsed[1]
+//     constSup = retteParParsed[2]
+//     vinc_inf = retteParParsed[3]
+//     coeffInf = retteParParsed[4]
+//     constInf = retteParParsed[5]
+    
+//     dur_sign=np.inf
+
+//     if corr<vinc_inf and corr>0:
+//         dur_sign = coeffInf*corr + constInf
+    
+//     if corr>vinc_sup:
+//         dur_sign = coeffSup*corr + constSup
+//     return dur_sign
+
+       // retteOrig = [float(x) for x in list(pyramidalNeuronsDatabase[nomeNeurone]['block_line_params'].values())]
+       //                  rette = [0,0,0,0,0,0]
+       //                  for it in range(6):
+       //                      if retteOrig[it]>1000000:                                
+       //                          rette[it] = np.inf
+       //                      elif retteOrig[it]<-1000000:                                
+       //                          rette[it] = -np.inf
+  
   double
   migliore::migliV(double t, double delta, double Psi, 
 		   double alpha, double beta, double IaA0, 
@@ -863,22 +919,22 @@ namespace nest
 		S_.Idep_ini_ = Idep(t_final, P_.bet_, S_.Idep_ini_, t0_val, S_.r_ref_);
 	      }
 	    }
-	    if (corpre != S_.current_ && (S_.current_ < 0 && S_.current_ > V_.mincurr))
+	    if (corpre != S_.current_ && (S_.current_ < 0 && S_.current_ > P_.mincurr_))
 	      {
 		v_ini = set_v_ini( vini_prec, S_.r_ref_, V_.vrm);
 	      }
-	    if (S_.current_ < 0 && S_.current_ > V_.mincurr)
+	    if (S_.current_ < 0 && S_.current_ > P_.mincurr_)
 	      {
 		currCoeff = 1;
 		v_ini = default_v_ini(currCoeff, S_.current_);
 	      }
-	    if (corpre != S_.current_  && S_.current_ <= V_.mincurr){
+	    if (corpre != S_.current_  && S_.current_ <= P_.mincurr_){
 	      S_.Iadap_ini_ = -P_.V_min_ / P_.E_L_ + 1;
 	      S_.Idep_ini_ = 0;
 	      currCoeff = 1;
 	      v_ini = default_v_ini(currCoeff, S_.current_);
 	    }
-	    if (S_.current_ <= V_.mincurr) {
+	    if (S_.current_ <= P_.mincurr_) {
 	      v_ini = V_.V_star_min_;
 	    }
 	  }

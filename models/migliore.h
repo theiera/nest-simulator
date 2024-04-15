@@ -222,6 +222,15 @@ private:
     double mg_ref_;
     double mgb_k_;
     double mgb_shift_;
+    double mincurr_;
+    double coeffInf_;
+    double constInf_;
+    double coeffSup_;
+    double constSup_;
+    double aglif_p_;
+    double vinc_inf_;
+    double vinc_sup_;
+
     /** External DC current */
     double I_e_;
 
@@ -338,10 +347,11 @@ private:
     unsigned int receptor_types_size_;
 
     double time_scale_, d_dt, dt, beta2, t_step;
-    double mincurr, V_star_min_, alpha_neg_;
+    double V_star_min_, alpha_neg_;
     double H, Vconvfact, vrm, psi1;
     double t_spk;
-
+    double I_th_, Cm_, sc_;
+    
     // double GG;
     double C;
     // double JJ, JJ_1, JJ_2, JJ_3, JJ_4, JJ_5, JJ_6, JJ_7;

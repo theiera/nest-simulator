@@ -639,8 +639,13 @@ const Name mg_ref( "mg_ref" );
 const Name mgb_k( "mgb_k" );
 const Name mgb_shift( "mgb_shift" );
 const Name mincurr( "mincurr" );
-
-  
+const Name coeffInf( "coeffInf" );
+const Name constInf( "constInf" );
+const Name coeffSup( "coeffSup" );
+const Name constSup( "constSup" );  
+const Name aglif_p( "aglif_p" );  
+const Name vinc_inf( "vinc_inf" );  
+const Name vinc_sup( "vinc_sup" );  
 } // namespace names
 
 } // namespace nest

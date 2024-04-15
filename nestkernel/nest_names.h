@@ -665,6 +665,13 @@ extern const Name mg_ref;
 extern const Name mgb_k;
 extern const Name mgb_shift;
 extern const Name mincurr;
+extern const Name coeffInf;
+extern const Name constInf;
+extern const Name coeffSup;
+extern const Name constSup;
+extern const Name aglif_p;
+extern const Name vinc_inf;
+extern const Name vinc_sup;
 } // namespace names
 
 } // namespace nest
