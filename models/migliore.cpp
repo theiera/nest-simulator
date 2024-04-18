@@ -145,6 +145,7 @@ namespace nest
     , coeffSup_ ( -0.028 )  // Default value for the NEURON model
     , constSup_ ( 76.86 ) // Default value for the NEURON model
     , mincurr_  ( -185.0 ) // Default value for the NEURON model
+    , aglif_p_ ( 1.0 ) 
   {
   }
 
@@ -549,10 +550,10 @@ namespace nest
     V_.sc_ = P_.sc_ * P_.aglif_p_;
       
     V_.V_star_min_ = -P_.V_min_ / P_.E_L_;
-    V_.alpha_neg_ = P_.mincurr_ / P_.sc_;
+    V_.alpha_neg_ = P_.mincurr_ / V_.sc_;
 
     
-    // V_.H = (90+P_.E_L_)*P_.sc_*(P_.bet_-P_.delta1_)/(P_.E_L_*(P_.mincurr_));
+    // V_.H = (90+P_.E_L_)*V_.sc_*(P_.bet_-P_.delta1_)/(P_.E_L_*(P_.mincurr_));
     V_.Vconvfact = -P_.E_L_;
     V_.vrm = P_.Vres_/V_.Vconvfact;
     // V_.psi1 = pow((-4)*P_.bet_+pow(1+P_.delta1_,2.0),0.5); // This should substitute P_.psi1_
@@ -848,18 +849,18 @@ namespace nest
 	absolute_time = ( origin.get_steps() + lag) * V_.d_dt;
 	if ((t_final-S_.init_sign_)*V_.time_scale_ >= nest::migliore::tagliorette(S_.current_))
 	  {
-	    if (S_.current_ > P_.I_th_)
+	    if (S_.current_ > V_.I_th_)
 	      {
-		if (corpre < P_.I_th_ || S_.sis_ == 0){
+		if (corpre < V_.I_th_ || S_.sis_ == 0){
 		  S_.init_sign_ = t_final;
-		  S_.Idep_ini_ = std::max(P_.Idep_ini_vr_, P_.cost_idep_ini_*(S_.current_ - P_.I_th_));
+		  S_.Idep_ini_ = std::max(P_.Idep_ini_vr_, P_.cost_idep_ini_*(S_.current_ - V_.I_th_));
 		  S_.Iadap_ini_ = 0;
 
-		  currCoeff = (S_.current_ - P_.I_th_)/S_.current_;
+		  currCoeff = (S_.current_ - V_.I_th_)/S_.current_;
 		  v_ini = default_v_ini(currCoeff, S_.current_);
 		  v_ini = migliV(t_final, P_.delta1_, V_.psi1,
-				 S_.current_/P_.sc_, P_.bet_, S_.Iadap_ini_, S_.Idep_ini_, t0_val, v_ini, S_.r_ref_, V_.vrm);
-		  S_.Iadap_ini_ = Iadap(t_final, P_.delta1_, V_.psi1, S_.current_ / P_.sc_, P_.bet_, S_.Iadap_ini_, S_.Idep_ini_, t0_val, v_ini, S_.r_ref_);
+				 S_.current_/V_.sc_, P_.bet_, S_.Iadap_ini_, S_.Idep_ini_, t0_val, v_ini, S_.r_ref_, V_.vrm);
+		  S_.Iadap_ini_ = Iadap(t_final, P_.delta1_, V_.psi1, S_.current_ / V_.sc_, P_.bet_, S_.Iadap_ini_, S_.Idep_ini_, t0_val, v_ini, S_.r_ref_);
 		  S_.Idep_ini_ = Idep(t_final, P_.bet_, S_.Idep_ini_, t0_val, S_.r_ref_);
 		}
 	      }
@@ -867,10 +868,10 @@ namespace nest
 	      v_ini = set_v_ini(vini_prec, S_.r_ref_, V_.vrm);
 	    } else
 	      {
-		if (S_.current_ < P_.I_th_ && S_.current_ > 0) {currCoeff = 0;}
+		if (S_.current_ < V_.I_th_ && S_.current_ > 0) {currCoeff = 0;}
 		else if (S_.current_<=0) {currCoeff = 1;}
 		else
-		  { currCoeff = (S_.current_ - P_.I_th_)/S_.current_;}
+		  { currCoeff = (S_.current_ - V_.I_th_)/S_.current_;}
 		v_ini = default_v_ini(currCoeff, S_.current_);
 	      }
 	    vini_prec = v_ini;
@@ -888,33 +889,33 @@ namespace nest
 
 	  } else {
 	  vini_prec = v_ini;
-	  if ((S_.current_ < P_.I_th_ && S_.current_ >= 0) || S_.sis_ == 0)
+	  if ((S_.current_ < V_.I_th_ && S_.current_ >= 0) || S_.sis_ == 0)
 	    {
 	      currCoeff = 0;
 	      v_ini = default_v_ini(currCoeff, S_.current_);
 	    } else{
 	    if ( V_.out.size() > 2 && S_.current_ < corpre && S_.current_ > 0 && ((V_.t_spk + 2 * V_.d_dt) < t_final * V_.time_scale_)) {
-	      teta = (V_.out[V_.out.size()-1] / (corpre / P_.sc_)) * (1/V_.dt-P_.delta1_)
-		-(V_.out[V_.out.size()-2] / ((corpre / P_.sc_)*V_.dt))
-		-P_.delta1_ / (corpre / P_.sc_) -1;
+	      teta = (V_.out[V_.out.size()-1] / (corpre / V_.sc_)) * (1/V_.dt-P_.delta1_)
+		-(V_.out[V_.out.size()-2] / ((corpre / V_.sc_)*V_.dt))
+		-P_.delta1_ / (corpre / V_.sc_) -1;
 	      if (teta < 0) {teta = 0;}
-	      S_.Idep_ini_ = S_.Iadap_ini_ + teta * (S_.current_/ P_.sc_) / P_.bet_;
+	      S_.Idep_ini_ = S_.Iadap_ini_ + teta * (S_.current_/ V_.sc_) / P_.bet_;
 	      v_ini = migliV(t_final, P_.delta1_, V_.psi1,
-			     S_.current_/P_.sc_, P_.bet_,
+			     S_.current_/V_.sc_, P_.bet_,
 			     S_.Iadap_ini_, S_.Idep_ini_,
 			     t0_val, v_ini, S_.r_ref_, V_.vrm);
 	      S_.Iadap_ini_ = Iadap(t_final, P_.delta1_, V_.psi1,
-				    S_.current_ / P_.sc_, P_.bet_, S_.Iadap_ini_,
+				    S_.current_ / V_.sc_, P_.bet_, S_.Iadap_ini_,
 				    S_.Idep_ini_, t0_val, v_ini, S_.r_ref_);
 	      S_.Idep_ini_ = Idep(t_final, P_.bet_, S_.Idep_ini_, t0_val, S_.r_ref_);
 	    } else {
 	      if (S_.current_ > 0) {
 		v_ini = migliV(t_final, P_.delta1_, V_.psi1,
-			       S_.current_/P_.sc_, P_.bet_,
+			       S_.current_/V_.sc_, P_.bet_,
 			       S_.Iadap_ini_, S_.Idep_ini_,
 			       t0_val, v_ini, S_.r_ref_, V_.vrm);
 		S_.Iadap_ini_ = Iadap(t_final, P_.delta1_, V_.psi1,
-				      S_.current_ / P_.sc_, P_.bet_, S_.Iadap_ini_,
+				      S_.current_ / V_.sc_, P_.bet_, S_.Iadap_ini_,
 				      S_.Idep_ini_, t0_val, v_ini, S_.r_ref_);
 		S_.Idep_ini_ = Idep(t_final, P_.bet_, S_.Idep_ini_, t0_val, S_.r_ref_);
 	      }
@@ -955,12 +956,12 @@ namespace nest
 	// Count down for refractory period
 	if (S_.r_ref_ > 0) {--S_.r_ref_;}
 
-	if (S_.current_ > P_.I_th_) {
-	  if (corpre < P_.I_th_) {
+	if (S_.current_ > V_.I_th_) {
+	  if (corpre < V_.I_th_) {
 	    S_.init_sign_ = t_final;
-	    S_.Idep_ini_ = std::max(P_.Idep_ini_vr_, P_.cost_idep_ini_*(S_.current_ - P_.I_th_));
+	    S_.Idep_ini_ = std::max(P_.Idep_ini_vr_, P_.cost_idep_ini_*(S_.current_ - V_.I_th_));
 	    S_.Iadap_ini_ = 0;                
-	    currCoeff = (S_.current_ - P_.I_th_)/S_.current_;
+	    currCoeff = (S_.current_ - V_.I_th_)/S_.current_;
 	    v_ini = default_v_ini(currCoeff, S_.current_);
 	    if (S_.current_<1e-11) {
 	      v_ini = -1;
@@ -1004,7 +1005,7 @@ namespace nest
 	      }
 	    }
 			  
-	    if (S_.current_ < P_.I_th_) {
+	    if (S_.current_ < V_.I_th_) {
 	      S_.Idep_ini_ = 0;
 	      S_.Iadap_ini_ = P_.Iadap_start_;
 	    } else {
