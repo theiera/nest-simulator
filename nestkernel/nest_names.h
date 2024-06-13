@@ -672,6 +672,8 @@ extern const Name constSup;
 extern const Name aglif_p;
 extern const Name vinc_inf;
 extern const Name vinc_sup;
+extern const Name zeta;
+extern const Name csi;
 } // namespace names
 
 } // namespace nest

@@ -646,6 +646,8 @@ const Name constSup( "constSup" );
 const Name aglif_p( "aglif_p" );  
 const Name vinc_inf( "vinc_inf" );  
 const Name vinc_sup( "vinc_sup" );  
+const Name zeta( "zeta" );
+const Name csi( "csi" );
 } // namespace names
 
 } // namespace nest

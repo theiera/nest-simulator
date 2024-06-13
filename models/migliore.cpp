@@ -145,7 +145,11 @@ namespace nest
     , coeffSup_ ( -0.028 )  // Default value for the NEURON model
     , constSup_ ( 76.86 ) // Default value for the NEURON model
     , mincurr_  ( -185.0 ) // Default value for the NEURON model
-    , aglif_p_ ( 1.0 ) 
+    , aglif_p_ ( 1.0 )
+    , zeta_ ( 3.5e-3 )     // Neuron equilibrium params    
+    , eta_ ( 2.5e-3 )
+    , rho_ ( 1e-3 )
+    , csi_ ( 3.5e-3 )
   {
   }
 
@@ -210,6 +214,10 @@ namespace nest
     def< double >( d, names::vinc_inf, vinc_inf_ );
     def< double >( d, names::vinc_sup, vinc_sup_ );
     def< double >( d, names::mincurr, mincurr_ );
+    def< double >( d, names::zeta, zeta_ );     // Neuron equilibrium params    
+    def< double >( d, names::eta,  eta_ );
+    def< double >( d, names::rho, rho_ );
+    def< double >( d, names::csi, csi_ );
 
     def< int >( d, names::n_synapses, n_receptors_() );
     def< bool >( d, names::has_connections, has_connections_ );
@@ -264,6 +272,10 @@ namespace nest
     updateValueParam< double >( d, names::vinc_inf, vinc_inf_, node );
     updateValueParam< double >( d, names::vinc_sup, vinc_sup_, node );
     updateValueParam< double >( d, names::mincurr, mincurr_, node );
+    updateValueParam< double >( d, names::zeta, zeta_, node );
+    updateValueParam< double >( d, names::eta, eta_, node );
+    updateValueParam< double >( d, names::rho, rho_, node );
+    updateValueParam< double >( d, names::csi, csi_, node );
 
     if ( t_ref_ < 0 )
       {
@@ -613,11 +625,11 @@ namespace nest
   migliore::tagliorette(double corr)
   {
     double dur_sign = std::numeric_limits<double>::infinity();
-    if (corr < P_.vinc_inf_ && corr >= 0)
+    if (corr < P_.vinc_inf_ && corr >= 0) // ValSupLineInf
       {
     	dur_sign = P_.coeffInf_ * corr + P_.constInf_;
       }
-    if (corr > P_.vinc_sup_) // THIS CANNOT HAPPEN!!
+    if (corr > P_.vinc_sup_) // THIS CANNOT HAPPEN!! ValInfLineSup
       {
     	dur_sign = P_.coeffSup_ * corr + P_.constSup_;
       }
@@ -694,9 +706,11 @@ namespace nest
 
 
   double
-  migliore::default_v_ini(double currCoeff, double cor_i)
+  migliore::default_v_ini(double cor_i, double zeta_eta_csi, double rho)
   {
-    double to_return = (P_.E_L_ + (1 - exp(-(2.5 + currCoeff)*cor_i/1000) )*(P_.V_th_ - P_.E_L_))/(-P_.E_L_);
+    //v_ini = ((EL + (1 - np.exp(-(zeta*1000*cor[i] - rho*1000*ith)/1000) )*(vtm - EL))/(-EL))
+    double to_return = ((P_.E_L_ + (1 - exp(-(zeta_eta_csi * 1000 * cor_i - rho * 1000 * V_.I_th_) / 1000) )
+			 *(P_.V_th_ - P_.E_L_))/(-P_.E_L_));
     return set_v_ini(to_return, S_.r_ref_, V_.vrm);
   }
   
@@ -856,8 +870,8 @@ namespace nest
 		  S_.Idep_ini_ = std::max(P_.Idep_ini_vr_, P_.cost_idep_ini_*(S_.current_ - V_.I_th_));
 		  S_.Iadap_ini_ = 0;
 
-		  currCoeff = (S_.current_ - V_.I_th_)/S_.current_;
-		  v_ini = default_v_ini(currCoeff, S_.current_);
+		  // currCoeff = (S_.current_ - V_.I_th_)/S_.current_; removed from AGLIF_040 when introduced the copies
+		  v_ini = default_v_ini(S_.current_, P_.zeta_, P_.rho_);
 		  v_ini = migliV(t_final, P_.delta1_, V_.psi1,
 				 S_.current_/V_.sc_, P_.bet_, S_.Iadap_ini_, S_.Idep_ini_, t0_val, v_ini, S_.r_ref_, V_.vrm);
 		  S_.Iadap_ini_ = Iadap(t_final, P_.delta1_, V_.psi1, S_.current_ / V_.sc_, P_.bet_, S_.Iadap_ini_, S_.Idep_ini_, t0_val, v_ini, S_.r_ref_);
@@ -868,11 +882,13 @@ namespace nest
 	      v_ini = set_v_ini(vini_prec, S_.r_ref_, V_.vrm);
 	    } else
 	      {
-		if (S_.current_ < V_.I_th_ && S_.current_ > 0) {currCoeff = 0;}
-		else if (S_.current_<=0) {currCoeff = 1;}
-		else
-		  { currCoeff = (S_.current_ - V_.I_th_)/S_.current_;}
-		v_ini = default_v_ini(currCoeff, S_.current_);
+		if (S_.current_ < V_.I_th_ && S_.current_ > 0) {
+		  v_ini = default_v_ini(S_.current_, P_.eta_, 0 );
+		} else if (S_.current_<=0) {
+		  v_ini = default_v_ini(S_.current_, P_.csi_, 0 );
+		} else {
+		  v_ini = default_v_ini(S_.current_, P_.zeta_, P_.rho_ );
+		}
 	      }
 	    vini_prec = v_ini;
 	    V_.out.push_back(v_ini);
@@ -891,9 +907,8 @@ namespace nest
 	  vini_prec = v_ini;
 	  if ((S_.current_ < V_.I_th_ && S_.current_ >= 0) || S_.sis_ == 0)
 	    {
-	      currCoeff = 0;
-	      v_ini = default_v_ini(currCoeff, S_.current_);
-	    } else{
+	      v_ini = default_v_ini(S_.current_, P_.eta_, 0 );
+	    } else {
 	    if ( V_.out.size() > 2 && S_.current_ < corpre && S_.current_ > 0 && ((V_.t_spk + 2 * V_.d_dt) < t_final * V_.time_scale_)) {
 	      teta = (V_.out[V_.out.size()-1] / (corpre / V_.sc_)) * (1/V_.dt-P_.delta1_)
 		-(V_.out[V_.out.size()-2] / ((corpre / V_.sc_)*V_.dt))
@@ -922,18 +937,16 @@ namespace nest
 	    }
 	    if (corpre != S_.current_ && (S_.current_ < 0 && S_.current_ > P_.mincurr_))
 	      {
-		v_ini = set_v_ini( vini_prec, S_.r_ref_, V_.vrm);
+		v_ini = set_v_ini(vini_prec, S_.r_ref_, V_.vrm);
 	      }
 	    if (S_.current_ < 0 && S_.current_ > P_.mincurr_)
 	      {
-		currCoeff = 1;
-		v_ini = default_v_ini(currCoeff, S_.current_);
+		v_ini = default_v_ini(S_.current_, P_.csi_, 0 );
 	      }
 	    if (corpre != S_.current_  && S_.current_ <= P_.mincurr_){
 	      S_.Iadap_ini_ = -P_.V_min_ / P_.E_L_ + 1;
 	      S_.Idep_ini_ = 0;
-	      currCoeff = 1;
-	      v_ini = default_v_ini(currCoeff, S_.current_);
+	      v_ini = default_v_ini(S_.current_, P_.csi_, 0 );
 	    }
 	    if (S_.current_ <= P_.mincurr_) {
 	      v_ini = V_.V_star_min_;
@@ -962,7 +975,7 @@ namespace nest
 	    S_.Idep_ini_ = std::max(P_.Idep_ini_vr_, P_.cost_idep_ini_*(S_.current_ - V_.I_th_));
 	    S_.Iadap_ini_ = 0;                
 	    currCoeff = (S_.current_ - V_.I_th_)/S_.current_;
-	    v_ini = default_v_ini(currCoeff, S_.current_);
+	    v_ini = default_v_ini(S_.current_, P_.zeta_, P_.rho_ );
 	    if (S_.current_<1e-11) {
 	      v_ini = -1;
 	    }

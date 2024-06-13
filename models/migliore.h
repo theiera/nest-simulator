@@ -165,7 +165,7 @@ private:
 		double, double, double, 
 		double, double, double,
 		int, double);  
-  double default_v_ini(double, double);
+  double default_v_ini(double, double, double);
   double set_v_ini(double, int, double);
   
   double Iadap(double, double, double, double,
@@ -230,6 +230,10 @@ private:
     double aglif_p_;
     double vinc_inf_;
     double vinc_sup_;
+    double zeta_;
+    double eta_;
+    double rho_;
+    double csi_;
 
     /** External DC current */
     double I_e_;
