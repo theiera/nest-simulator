@@ -134,10 +134,11 @@ namespace nest
     , tau_syn_slow_rise_ ( 0.1, 0.1 ) // in ms
     , tau_syn_slow_decay_ ( 3.0, 10.0 ) // in ms
     , has_connections_( false )
+    , NMDA_ratio_( 1.22 ) // 2 mM in the Johnston et al. 2010, extracellula [MgCl2] = 1 mM in Edelman et al. 2015
     , mg_( 2.0) // 2 mM in the Johnston et al. 2010, extracellula [MgCl2] = 1 mM in Edelman et al. 2015
     , mgb_k_ ( 0.062 ) // (/mV) Johnston et al. 2010
     , mg_ref_ ( 3.57 ) // (mM) Johnston et al. 2010
-    , mgb_shift_ ( 0.0 ) // (mM) Johnston et al. 2010
+    , mgb_shift_ ( -10.0 ) // (mM) Johnston et al. 2010
     , vinc_inf_ ( 700.0 ) // Default value for the NEURON model
     , vinc_sup_ ( std::numeric_limits<double>::infinity() ) // Default value for the NEURON model
     , coeffInf_ ( 0.68 ) // Default value for the NEURON model
