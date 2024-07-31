@@ -476,7 +476,9 @@ namespace nest
     // spike time may exhibit a different effective refractory time.
 
     const double h = Time::get_resolution().get_ms();
-
+    
+    V_.blockActive = false;
+    
     V_.P11_syn_fast_rise_.resize( P_.n_receptors_() );
     V_.P11_syn_fast_decay_.resize( P_.n_receptors_() );
     V_.fast_tp_.resize( P_.n_receptors_() );
@@ -669,8 +671,10 @@ namespace nest
 		   double IdA0, double t0, double V0,
 		   int r_ref_, double vrm)
   {
-    double to_return = 0.5 / (beta -delta) / (pow(beta,2.0) + (-1.0 + beta) * delta) / (4 * beta + (- 1.0) * pow((1.0 + delta),2.0)) * Psi *      (2.0 * exp((-t + t0) * beta) * IdA0 * (-1.0 + beta) * beta * (beta -delta) * Psi + (-2.0) * (alpha + (-1.0) * beta + delta) * (pow(beta,2.0) + ((-1.0) + beta) * delta) * Psi + exp(0.5 * (t - t0) * (-1.0 + delta - Psi)) * (IdA0 * beta * (beta -delta) * (-1.0 -delta + beta * (3.0 + delta - Psi) + Psi) - (pow(beta,2.0) -delta + beta * delta) * (alpha * (1.0 + (-2.0) * beta + delta - Psi) + (beta -delta) * ((-1.0) + 2.0 * IaA0 * beta -delta + Psi + V0 * (-1.0 -delta + Psi)))) + exp(0.5 * (t + (-1.0) * t0) * (-1.0 + delta + Psi)) * (- IdA0 * beta * (beta - delta) * (-1.0 -delta - Psi + beta * (3.0 + delta + Psi)) + (pow(beta,2.0) -delta + beta * delta) * (alpha * (1.0 + (-2.0) * beta + delta + Psi) + (beta -delta) * (-1.0 + 2.0 * IaA0 * beta - delta - Psi - V0 * (1.0 + delta + Psi)))));
-      
+    // double to_return = 0.5 / (beta -delta) / (pow(beta,2.0) + (-1.0 + beta) * delta) / (4 * beta + (- 1.0) * pow((1.0 + delta),2.0)) * Psi *      (2.0 * exp((-t + t0) * beta) * IdA0 * (-1.0 + beta) * beta * (beta -delta) * Psi + (-2.0) * (alpha + (-1.0) * beta + delta) * (pow(beta,2.0) + ((-1.0) + beta) * delta) * Psi + exp(0.5 * (t - t0) * (-1.0 + delta - Psi)) * (IdA0 * beta * (beta -delta) * (-1.0 -delta + beta * (3.0 + delta - Psi) + Psi) - (pow(beta,2.0) -delta + beta * delta) * (alpha * (1.0 + (-2.0) * beta + delta - Psi) + (beta -delta) * ((-1.0) + 2.0 * IaA0 * beta -delta + Psi + V0 * (-1.0 -delta + Psi)))) + exp(0.5 * (t + (-1.0) * t0) * (-1.0 + delta + Psi)) * (- IdA0 * beta * (beta - delta) * (-1.0 -delta - Psi + beta * (3.0 + delta + Psi)) + (pow(beta,2.0) -delta + beta * delta) * (alpha * (1.0 + (-2.0) * beta + delta + Psi) + (beta -delta) * (-1.0 + 2.0 * IaA0 * beta - delta - Psi - V0 * (1.0 + delta + Psi)))));
+
+    double to_return = 0.5 / (beta - delta) / (pow(beta,2.0) + (-1.0 + beta) * delta) / (4.0 * beta - pow((1.0 + delta),2.0)) * Psi * (2.0 * exp((t0 - t ) * beta) * IdA0 * (-1.0 + beta) * beta * (beta - delta) * Psi -2.0 * (alpha - beta + delta) * (pow(beta,2.0) + (- 1.0 + beta) * delta) * Psi + exp(0.5 * (t - t0) * (-1.0 + delta - Psi)) * (IdA0 * beta * (beta - delta) * (-1.0 - delta + beta * (3.0 + delta - Psi) + Psi) - (pow(beta,2.0) - delta + beta * delta) * (alpha * (1.0 -2.0 * beta + delta - Psi) + (beta - delta) * (-1.0 + 2.0 * IaA0 * beta - delta + Psi + V0 * (-1.0 - delta + Psi)))) + exp(0.5 * (t - t0) * (-1.0 + delta + Psi)) * (-1.0 * IdA0 * beta * (beta - delta) * (-1.0 - delta - Psi + beta * (3.0 + delta + Psi)) + (pow(beta,2.0) - delta + beta * delta) * (alpha * (1.0 -2.0 * beta + delta + Psi) + (beta - delta) * (-1.0 + 2.0 * IaA0 * beta - delta - Psi - V0 * (1.0 + delta + Psi)))));
+    
     //    double to_return = V_.VV_1 * (2.0 * exp((t0 - t) * beta) * IdA0 * V_.VV_2 - 2.0 * (alpha - beta + delta) * V_.VV_3 + exp(V_.VV_4 * (t - t0)) * (IdA0 * V_.VV_5 - V_.VV_6 * (alpha * V_.VV_7 + (beta - delta) * (-1.0 + 2.0 * IaA0 * beta - delta + Psi + V0 * (-1.0 - delta + Psi)))) + exp(0.5 * (t - t0) * (-1.0 + delta + Psi)) * (- IdA0 * V_.VV_8 + V_.VV_9 * (alpha * V_.VV_10 + (beta - delta) * (-1.0 + 2.0 * IaA0 * beta - delta - Psi - V0 * (1.0 + delta + Psi)))));
 
     // double to_return = 0.5 / (beta - delta) / (pow(beta,2.0) + (beta - 1.0) * delta) / (4 * beta - pow((1.0 + delta),2.0)) *
@@ -821,6 +825,7 @@ namespace nest
     for ( long lag = from; lag < to; ++lag )
       {
 	double corpre = S_.current_; // + S_.I;
+
 	// set new input current
 	S_.current_ = 0.0;
 	S_.I_inj_ = B_.currents_.get_value( lag );
@@ -859,10 +864,10 @@ namespace nest
 	// current = S_.current_;
 	// vmss = S_.V_m_;
 	// timess = t_final * V_.time_scale_;
-	t0_val = t_final;
-	t_final = t0_val + local_time_step ;//Time::step( origin.get_steps() + lag + 1 );
+	// t0_val = t_final;
+	// t_final = t0_val + local_time_step ;//Time::step( origin.get_steps() + lag + 1 );
 	absolute_time = ( origin.get_steps() + lag) * V_.d_dt;
-	if ((t_final-S_.init_sign_)*V_.time_scale_ >= nest::migliore::tagliorette(S_.current_))
+	if ((t_final-S_.init_sign_)*V_.time_scale_ >= nest::migliore::tagliorette(S_.current_) and V_.blockActive)
 	  {
 	    if (S_.current_ > V_.I_th_)
 	      {
@@ -871,6 +876,8 @@ namespace nest
 		  S_.Idep_ini_ = std::max(P_.Idep_ini_vr_, P_.cost_idep_ini_*(S_.current_ - V_.I_th_));
 		  S_.Iadap_ini_ = 0;
 
+		  V_.blockActive = false;
+		  
 		  // currCoeff = (S_.current_ - V_.I_th_)/S_.current_; removed from AGLIF_040 when introduced the copies
 		  v_ini = default_v_ini(S_.current_, P_.zeta_, P_.rho_);
 		  v_ini = migliV(t_final, P_.delta1_, V_.psi1,
@@ -909,23 +916,14 @@ namespace nest
 	  if ((S_.current_ < V_.I_th_ && S_.current_ >= 0) || S_.sis_ == 0)
 	    {
 	      v_ini = default_v_ini(S_.current_, P_.eta_, 0 );
-	    } else {
-	    if ( V_.out.size() > 2 && S_.current_ < corpre && S_.current_ > 0 && ((V_.t_spk + 2 * V_.d_dt) < t_final * V_.time_scale_)) {
-	      teta = (V_.out[V_.out.size()-1] / (corpre / V_.sc_)) * (1/V_.dt-P_.delta1_)
-		-(V_.out[V_.out.size()-2] / ((corpre / V_.sc_)*V_.dt))
-		-P_.delta1_ / (corpre / V_.sc_) -1;
-	      if (teta < 0) {teta = 0;}
-	      S_.Idep_ini_ = S_.Iadap_ini_ + teta * (S_.current_/ V_.sc_) / P_.bet_;
-	      v_ini = migliV(t_final, P_.delta1_, V_.psi1,
-			     S_.current_/V_.sc_, P_.bet_,
-			     S_.Iadap_ini_, S_.Idep_ini_,
-			     t0_val, v_ini, S_.r_ref_, V_.vrm);
-	      S_.Iadap_ini_ = Iadap(t_final, P_.delta1_, V_.psi1,
-				    S_.current_ / V_.sc_, P_.bet_, S_.Iadap_ini_,
-				    S_.Idep_ini_, t0_val, v_ini, S_.r_ref_);
-	      S_.Idep_ini_ = Idep(t_final, P_.bet_, S_.Idep_ini_, t0_val, S_.r_ref_);
-	    } else {
-	      if (S_.current_ > 0) {
+	    } else
+	    {
+	      if ( V_.out.size() > 2 && S_.current_ < corpre && S_.current_ > 0 && ((V_.t_spk + 2 * V_.d_dt) < t_final * V_.time_scale_)) {
+		teta = (V_.out[V_.out.size()-1] / (corpre / V_.sc_)) * (1/V_.dt-P_.delta1_)
+		  -(V_.out[V_.out.size()-2] / ((corpre / V_.sc_)*V_.dt))
+		  -P_.delta1_ / (corpre / V_.sc_) -1;
+		if (teta < 0) {teta = 0;}
+		S_.Idep_ini_ = S_.Iadap_ini_ + teta * (S_.current_/ V_.sc_) / P_.bet_;
 		v_ini = migliV(t_final, P_.delta1_, V_.psi1,
 			       S_.current_/V_.sc_, P_.bet_,
 			       S_.Iadap_ini_, S_.Idep_ini_,
@@ -934,6 +932,16 @@ namespace nest
 				      S_.current_ / V_.sc_, P_.bet_, S_.Iadap_ini_,
 				      S_.Idep_ini_, t0_val, v_ini, S_.r_ref_);
 		S_.Idep_ini_ = Idep(t_final, P_.bet_, S_.Idep_ini_, t0_val, S_.r_ref_);
+	      } else {
+		if (S_.current_ > 0) {
+		  v_ini = migliV(t_final, P_.delta1_, V_.psi1,
+				 S_.current_/V_.sc_, P_.bet_,
+				 S_.Iadap_ini_, S_.Idep_ini_,
+				 t0_val, v_ini, S_.r_ref_, V_.vrm);
+		  S_.Iadap_ini_ = Iadap(t_final, P_.delta1_, V_.psi1,
+					S_.current_ / V_.sc_, P_.bet_, S_.Iadap_ini_,
+					S_.Idep_ini_, t0_val, v_ini, S_.r_ref_);
+		  S_.Idep_ini_ = Idep(t_final, P_.bet_, S_.Idep_ini_, t0_val, S_.r_ref_);
 	      }
 	    }
 	    if (corpre != S_.current_ && (S_.current_ < 0 && S_.current_ > P_.mincurr_))
@@ -958,6 +966,25 @@ namespace nest
 	    S_.Iadap_ini_ = P_.Iadap_start_;
 	  }
 
+
+	// Count down for refractory period
+	if (S_.r_ref_ > 0) {--S_.r_ref_;}
+
+	if (S_.current_ > V_.I_th_) {
+	  if (corpre < V_.I_th_) {
+	    
+	    V_.blockActive = false;
+
+	    S_.init_sign_ = t_final;
+	    S_.Idep_ini_ = std::max(P_.Idep_ini_vr_, P_.cost_idep_ini_*(S_.current_ - V_.I_th_));
+	    S_.Iadap_ini_ = 0;                
+	    v_ini = default_v_ini(S_.current_, P_.zeta_, P_.rho_ );
+	    if (S_.current_<1e-11) {
+	      v_ini = -1;
+	    }
+	  }
+	}
+
 	V_.out.push_back(v_ini);
 	S_.V_m_ = v_ini * V_.Vconvfact;
 	while (V_.out.size() > 3)
@@ -967,26 +994,10 @@ namespace nest
 	// lower bound of membrane potential REMOVED in 041 version
 	// S_.V_m_ = ( S_.V_m_ < P_.V_min_ ? P_.V_min_ : S_.V_m_ );
 
-	// Count down for refractory period
-	if (S_.r_ref_ > 0) {--S_.r_ref_;}
-
-	if (S_.current_ > V_.I_th_) {
-	  if (corpre < V_.I_th_) {
-	    S_.init_sign_ = t_final;
-	    S_.Idep_ini_ = std::max(P_.Idep_ini_vr_, P_.cost_idep_ini_*(S_.current_ - V_.I_th_));
-	    S_.Iadap_ini_ = 0;                
-	    currCoeff = (S_.current_ - V_.I_th_)/S_.current_;
-	    v_ini = default_v_ini(S_.current_, P_.zeta_, P_.rho_ );
-	    if (S_.current_<1e-11) {
-	      v_ini = -1;
-	    }
-	  }
-	}
-
 	// threshold crossing
 	if ( S_.V_m_ >= P_.V_th_ )
 	  {
-	    S_.V_m_ = P_.V_th_;
+	    // S_.V_m_ = P_.V_th_; This is for output graphic so that alla spikes have the same height ASK MICHELE!!!
 	    // voltage logging
 	    B_.logger_.record_data( origin.get_steps() + lag );
 
@@ -996,6 +1007,9 @@ namespace nest
 	    // f.write(str(round(t_spk, 3)) + ' \n')
 	    S_.V_m_ = P_.Vres_; // -65
 	    v_ini = V_.vrm;
+
+	    V_.blockActive = true;
+	    
 	    c_aux = P_.c_;
 	    if (S_.current_ < P_.istim_min_spikinig_exp_ || S_.current_ > P_.istim_max_spikinig_exp_)
 	      {

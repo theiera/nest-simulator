@@ -346,6 +346,8 @@ private:
     std::vector< double > syn_fast_factor_;
     std::vector< double > syn_slow_factor_;
 
+    bool blockActive;
+
     int RefractoryCounts_;
 
     unsigned int receptor_types_size_;
