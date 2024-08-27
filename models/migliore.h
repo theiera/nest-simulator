@@ -163,15 +163,15 @@ private:
   double tagliorette(double);
   double migliV(double, double, double, 
 		double, double, double, 
-		double, double, double,
+		double, double,
 		int, double);  
   double default_v_ini(double, double, double);
   double set_v_ini(double, int, double);
   
   double Iadap(double, double, double, double,
-		 double, double, double, double,
-	       double, int);
-  double Idep(double, double, double, double, int);
+	       double, double, double, double,
+	       int);
+  double Idep(double, double, double, int);
   double exp_cum(double, double, double);
   double monod(double, double, double, double, double);
   double mgblock(double);

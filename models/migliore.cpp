@@ -669,14 +669,14 @@ namespace nest
        //                          rette[it] = -np.inf
   
   double
-  migliore::migliV(double t, double delta, double Psi, 
+  migliore::migliV(double step, double delta, double Psi, 
 		   double alpha, double beta, double IaA0, 
-		   double IdA0, double t0, double V0,
+		   double IdA0, double V0,
 		   int r_ref_, double vrm)
   {
     // double to_return = 0.5 / (beta -delta) / (pow(beta,2.0) + (-1.0 + beta) * delta) / (4 * beta + (- 1.0) * pow((1.0 + delta),2.0)) * Psi *      (2.0 * exp((-t + t0) * beta) * IdA0 * (-1.0 + beta) * beta * (beta -delta) * Psi + (-2.0) * (alpha + (-1.0) * beta + delta) * (pow(beta,2.0) + ((-1.0) + beta) * delta) * Psi + exp(0.5 * (t - t0) * (-1.0 + delta - Psi)) * (IdA0 * beta * (beta -delta) * (-1.0 -delta + beta * (3.0 + delta - Psi) + Psi) - (pow(beta,2.0) -delta + beta * delta) * (alpha * (1.0 + (-2.0) * beta + delta - Psi) + (beta -delta) * ((-1.0) + 2.0 * IaA0 * beta -delta + Psi + V0 * (-1.0 -delta + Psi)))) + exp(0.5 * (t + (-1.0) * t0) * (-1.0 + delta + Psi)) * (- IdA0 * beta * (beta - delta) * (-1.0 -delta - Psi + beta * (3.0 + delta + Psi)) + (pow(beta,2.0) -delta + beta * delta) * (alpha * (1.0 + (-2.0) * beta + delta + Psi) + (beta -delta) * (-1.0 + 2.0 * IaA0 * beta - delta - Psi - V0 * (1.0 + delta + Psi)))));
 
-    double to_return = 0.5 / (beta - delta) / (pow(beta,2.0) + (-1.0 + beta) * delta) / (4.0 * beta - pow((1.0 + delta),2.0)) * Psi * (2.0 * exp((t0 - t ) * beta) * IdA0 * (-1.0 + beta) * beta * (beta - delta) * Psi -2.0 * (alpha - beta + delta) * (pow(beta,2.0) + (- 1.0 + beta) * delta) * Psi + exp(0.5 * (t - t0) * (-1.0 + delta - Psi)) * (IdA0 * beta * (beta - delta) * (-1.0 - delta + beta * (3.0 + delta - Psi) + Psi) - (pow(beta,2.0) - delta + beta * delta) * (alpha * (1.0 -2.0 * beta + delta - Psi) + (beta - delta) * (-1.0 + 2.0 * IaA0 * beta - delta + Psi + V0 * (-1.0 - delta + Psi)))) + exp(0.5 * (t - t0) * (-1.0 + delta + Psi)) * (-1.0 * IdA0 * beta * (beta - delta) * (-1.0 - delta - Psi + beta * (3.0 + delta + Psi)) + (pow(beta,2.0) - delta + beta * delta) * (alpha * (1.0 -2.0 * beta + delta + Psi) + (beta - delta) * (-1.0 + 2.0 * IaA0 * beta - delta - Psi - V0 * (1.0 + delta + Psi)))));
+    double to_return = 0.5 / (beta - delta) / (pow(beta,2.0) + (-1.0 + beta) * delta) / (4.0 * beta - pow((1.0 + delta),2.0)) * Psi * (2.0 * exp((- step ) * beta) * IdA0 * (-1.0 + beta) * beta * (beta - delta) * Psi -2.0 * (alpha - beta + delta) * (pow(beta,2.0) + (- 1.0 + beta) * delta) * Psi + exp(0.5 * (step) * (-1.0 + delta - Psi)) * (IdA0 * beta * (beta - delta) * (-1.0 - delta + beta * (3.0 + delta - Psi) + Psi) - (pow(beta,2.0) - delta + beta * delta) * (alpha * (1.0 -2.0 * beta + delta - Psi) + (beta - delta) * (-1.0 + 2.0 * IaA0 * beta - delta + Psi + V0 * (-1.0 - delta + Psi)))) + exp(0.5 * (step) * (-1.0 + delta + Psi)) * (-1.0 * IdA0 * beta * (beta - delta) * (-1.0 - delta - Psi + beta * (3.0 + delta + Psi)) + (pow(beta,2.0) - delta + beta * delta) * (alpha * (1.0 -2.0 * beta + delta + Psi) + (beta - delta) * (-1.0 + 2.0 * IaA0 * beta - delta - Psi - V0 * (1.0 + delta + Psi)))));
     
     //    double to_return = V_.VV_1 * (2.0 * exp((t0 - t) * beta) * IdA0 * V_.VV_2 - 2.0 * (alpha - beta + delta) * V_.VV_3 + exp(V_.VV_4 * (t - t0)) * (IdA0 * V_.VV_5 - V_.VV_6 * (alpha * V_.VV_7 + (beta - delta) * (-1.0 + 2.0 * IaA0 * beta - delta + Psi + V0 * (-1.0 - delta + Psi)))) + exp(0.5 * (t - t0) * (-1.0 + delta + Psi)) * (- IdA0 * V_.VV_8 + V_.VV_9 * (alpha * V_.VV_10 + (beta - delta) * (-1.0 + 2.0 * IaA0 * beta - delta - Psi - V0 * (1.0 + delta + Psi)))));
 
@@ -739,11 +739,11 @@ namespace nest
 
 
   double
-  migliore::Iadap(double t, double delta, double Psi, double alpha,
-		  double beta, double IaA0, double IdA0, double t0,
+  migliore::Iadap(double step, double delta, double Psi, double alpha,
+		  double beta, double IaA0, double IdA0,
 		  double V0, int r_ref_)
   {
-    double to_return = ( - 2.0 * alpha * ( - 4 * pow(beta, 3.0) + pow(beta, 2.0) * pow(( - 1.0 + delta), 2.0) - delta * pow((1.0 + delta), 2.0) + beta * delta * (5 + 2.0 * delta + pow(delta, 2.0))) + 2.0 * exp((( - 1.0) * t + t0) * beta) * IdA0 * beta * (4 * pow(beta, 2.0) + delta * pow((1.0 + delta), 2.0) - beta * (1.0 + 6 * delta + pow(delta, 2.0))) + exp((1.0 / 2.0) * (t - t0) * ( - 1.0 + delta + Psi)) * ( - IdA0 * beta * (beta - delta) * ( - 1.0 + ( - 2.0) * delta - pow(delta, 2.0) - Psi + delta * Psi + 2.0 * beta * (2.0 + Psi)) + (pow(beta, 2.0) - delta + beta * delta) * (alpha * (1.0 + ( - 4) * beta + 2.0 * delta + pow(delta, 2.0) + Psi - delta * Psi) + (beta - delta) * (4 * IaA0 * beta - 2.0 * (1.0 + V0) * Psi + IaA0 * (1.0 + delta) * ( - 1.0 - delta + Psi)))) + exp(( - 1.0) * (1.0 / 2.0) * (t - t0) * (1.0 - delta + Psi)) * (IdA0 * beta * (beta - delta) * (1.0 + 2.0 * delta + pow(delta, 2.0) - Psi + delta * Psi + 2.0 * beta * ( - 2.0 + Psi)) + (pow(beta, 2.0) - delta + beta * delta) * (alpha * (1.0 - 4 * beta + 2.0 * delta + pow(delta, 2.0) - Psi + delta * Psi) - (beta - delta) * ( - 4 * IaA0 * beta - 2.0 * (1.0 + V0) * Psi + IaA0 * (1.0 + delta) * (1.0 + delta + Psi))))) / (2.0 * (beta - delta) * (pow(beta, 2.0) + ( - 1.0 + beta) * delta) * (4 * beta - pow((1.0 + delta), 2.0)));
+    double to_return = ( - 2.0 * alpha * ( - 4 * pow(beta, 3.0) + pow(beta, 2.0) * pow(( - 1.0 + delta), 2.0) - delta * pow((1.0 + delta), 2.0) + beta * delta * (5 + 2.0 * delta + pow(delta, 2.0))) + 2.0 * exp((- step) * beta) * IdA0 * beta * (4 * pow(beta, 2.0) + delta * pow((1.0 + delta), 2.0) - beta * (1.0 + 6 * delta + pow(delta, 2.0))) + exp((1.0 / 2.0) * (step) * ( - 1.0 + delta + Psi)) * ( - IdA0 * beta * (beta - delta) * ( - 1.0 + ( - 2.0) * delta - pow(delta, 2.0) - Psi + delta * Psi + 2.0 * beta * (2.0 + Psi)) + (pow(beta, 2.0) - delta + beta * delta) * (alpha * (1.0 + ( - 4) * beta + 2.0 * delta + pow(delta, 2.0) + Psi - delta * Psi) + (beta - delta) * (4 * IaA0 * beta - 2.0 * (1.0 + V0) * Psi + IaA0 * (1.0 + delta) * ( - 1.0 - delta + Psi)))) + exp(-0.5 * (step) * (1.0 - delta + Psi)) * (IdA0 * beta * (beta - delta) * (1.0 + 2.0 * delta + pow(delta, 2.0) - Psi + delta * Psi + 2.0 * beta * ( - 2.0 + Psi)) + (pow(beta, 2.0) - delta + beta * delta) * (alpha * (1.0 - 4 * beta + 2.0 * delta + pow(delta, 2.0) - Psi + delta * Psi) - (beta - delta) * ( - 4 * IaA0 * beta - 2.0 * (1.0 + V0) * Psi + IaA0 * (1.0 + delta) * (1.0 + delta + Psi))))) / (2.0 * (beta - delta) * (pow(beta, 2.0) + ( - 1.0 + beta) * delta) * (4 * beta - pow((1.0 + delta), 2.0)));
     // double to_return = (-2.0 * alpha * (-4.0 * pow(beta,3.0) + pow(beta,2.0) * pow((-1.0 + delta),2.0) - delta * pow((1.0 + delta),2.0) + beta * delta * (5 + 2.0 * delta + pow(delta,2.0))) + 2.0 * exp(((-1.0) * t  +  t0)  *  beta) * IdA0 * beta * (4.0 * pow(beta,2.0) + delta * pow((1.0 + delta),2.0) - beta * (1.0 + 6 * delta + pow(delta,2.0))) + exp(0.5 * (t-t0) * (-1.0 + delta + Psi)) * (-IdA0 * beta * (beta-delta) * (-1.0 + (-2.0) * delta - pow(delta,2.0) - Psi + delta * Psi + 2.0 * beta * (2.0 + Psi)) + (pow(beta,2.0) - delta + beta * delta) * (alpha * (1.0 + (-4.0) * beta + 2.0 * delta + pow(delta,2.0) + Psi-delta * Psi) + (beta-delta) * (4.0 * IaA0 * beta-2.0 * (1.0 + V0) * Psi + IaA0 * (1.0 + delta) * (-1.0-delta + Psi)))) + exp((-1.0) * (1.0 / 2.0)  *  (t-t0)  *  (1.0-delta + Psi)) * (IdA0 * beta * (beta-delta) * (1.0 + 2.0 * delta + pow(delta,2.0)-Psi + delta * Psi + 2.0 * beta * (-2.0 + Psi)) + (pow(beta,2.0) - delta + beta * delta) * (alpha * (1.0 - 4.0 * beta + 2.0 * delta + pow(delta,2.0) - Psi + delta * Psi)-(beta-delta) * (-4.0 * IaA0 * beta-2.0 * (1.0 + V0) * Psi + IaA0 * (1.0 + delta) * (1.0 + delta + Psi)))))/(2.0 * (beta-delta) * (pow(beta,2.0) + (-1.0 + beta) * delta) * (4.0 * beta - pow((1.0 + delta),2.0)));
     // double to_return = (-2.0*alpha*(-4.0*pow(beta,3.0)+pow(beta,2.0)*pow((-1.0+delta),2.0)-delta*pow((1.0+delta),2.0)+beta*delta*(5+2.0*delta+pow(delta,2.0)))+2.0*exp(((-1.0)*t + t0) * beta)*IdA0*beta*(4.0*pow(beta,2.0)+delta*pow((1.0+delta),2.0)-beta*(1.0+6*delta+pow(delta,2.0)))+exp((1.0 / 2.0)*(t-t0)*(-1.0+delta+Psi))*(-IdA0*beta*(beta-delta)*(-1.0+(-2.0)*delta-pow(delta,2.0)-Psi+delta*Psi+2.0*beta*(2.0+Psi))+(pow(beta,2.0)-delta+beta*delta)*(alpha*(1.0+(-4.0)*beta+2.0*delta+pow(delta,2.0)+Psi-delta*Psi)+(beta-delta)*(4.0*IaA0*beta-2.0*(1.0+V0)*Psi+IaA0*(1.0+delta)*(-1.0-delta+Psi))))+exp((-1.0)*(1.0 / 2.0) * (t-t0) * (1.0-delta+Psi))*(IdA0*beta*(beta-delta)*(1.0+2.0*delta+pow(delta,2.0)-Psi+delta*Psi+2.0*beta*(-2.0+Psi))+(pow(beta,2.0)-delta+beta*delta)*(alpha*(1.0-4.0*beta+2.0*delta+pow(delta,2.0)-Psi+delta*Psi)-(beta-delta)*(-4.0*IaA0*beta-2.0*(1.0+V0)*Psi+IaA0*(1.0+delta)*(1.0+delta+Psi)))))/(2.0*(beta-delta)*(pow(beta,2.0)+(-1.0+beta)*delta)*(4.0*beta-pow((1.0+delta),2.0)));
 
@@ -767,11 +767,11 @@ namespace nest
   }
 
   double
-  migliore::Idep(double t, double beta, double IdA0, double t0, int r_ref_)
+  migliore::Idep(double step, double beta, double IdA0, int r_ref_)
   {
     if (r_ref_ == 0)
       {
-    	return exp(-(t - t0) * P_.bet_)  * IdA0;
+    	return exp(-(step) * P_.bet_)  * IdA0;
       }
     else
       {
@@ -809,7 +809,9 @@ namespace nest
     double t0_val = origin.get_ms() / V_.time_scale_;
     double local_time_step = V_.dt;
     double t_final = t0_val + local_time_step;
-    std::cout << "from " << from << " to " << to << " V_.d_dt " << V_.d_dt << "\n";
+    double t_final_time = origin.get_ms() + V_.d_dt;
+    
+    // std::cout << std::setprecision(10) << "from " << from << " to " << to << " V_.d_dt " << V_.d_dt << "\n";
 	  
     double v_ini = set_v_ini(S_.V_m_ / V_.Vconvfact,S_.r_ref_, V_.vrm);
     double vini_prec = v_ini;
@@ -863,17 +865,13 @@ namespace nest
 	      }
 	    S_.i_syn_[ i ] = S_.i_syn_fast_decay_B_[ i ] - S_.i_syn_fast_rise_A_[ i ] + S_.i_syn_slow_decay_B_[ i ] - S_.i_syn_slow_rise_A_[ i ];
 	  }
-	// current = S_.current_;
-	// vmss = S_.V_m_;
-	// timess = t_final * V_.time_scale_;
-	// t0_val = t_final;
-	// t_final = t0_val + local_time_step ;//Time::step( origin.get_steps() + lag + 1 );
-	if ((t_final-S_.init_sign_)*V_.time_scale_ >= nest::migliore::tagliorette(S_.current_) and V_.blockActive)
+
+	if ((t_final_time - S_.init_sign_) >= nest::migliore::tagliorette(S_.current_) and V_.blockActive)
 	  {
 	    if (S_.current_ > V_.I_th_)
 	      {
 		if (corpre < V_.I_th_ || S_.sis_ == 0){
-		  S_.init_sign_ = t_final;
+		  S_.init_sign_ = t_final_time;
 		  S_.Idep_ini_ = std::max(P_.Idep_ini_vr_, P_.cost_idep_ini_*(S_.current_ - V_.I_th_));
 		  S_.Iadap_ini_ = 0;
 
@@ -881,10 +879,10 @@ namespace nest
 		  
 		  // currCoeff = (S_.current_ - V_.I_th_)/S_.current_; removed from AGLIF_040 when introduced the copies
 		  v_ini = default_v_ini(S_.current_, P_.zeta_, P_.rho_);
-		  v_ini = migliV(t_final, P_.delta1_, V_.psi1,
-				 S_.current_/V_.sc_, P_.bet_, S_.Iadap_ini_, S_.Idep_ini_, t0_val, v_ini, S_.r_ref_, V_.vrm);
-		  S_.Iadap_ini_ = Iadap(t_final, P_.delta1_, V_.psi1, S_.current_ / V_.sc_, P_.bet_, S_.Iadap_ini_, S_.Idep_ini_, t0_val, v_ini, S_.r_ref_);
-		  S_.Idep_ini_ = Idep(t_final, P_.bet_, S_.Idep_ini_, t0_val, S_.r_ref_);
+		  v_ini = migliV(local_time_step, P_.delta1_, V_.psi1,
+				 S_.current_/V_.sc_, P_.bet_, S_.Iadap_ini_, S_.Idep_ini_, v_ini, S_.r_ref_, V_.vrm);
+		  S_.Iadap_ini_ = Iadap(local_time_step, P_.delta1_, V_.psi1, S_.current_ / V_.sc_, P_.bet_, S_.Iadap_ini_, S_.Idep_ini_, v_ini, S_.r_ref_);
+		  S_.Idep_ini_ = Idep(local_time_step, P_.bet_, S_.Idep_ini_, S_.r_ref_);
 		}
 	      }
 	    if (corpre == 0) {
@@ -919,30 +917,30 @@ namespace nest
 	      v_ini = default_v_ini(S_.current_, P_.eta_, 0 );
 	    } else
 	    {
-	      if ( V_.out.size() > 2 && S_.current_ < corpre && S_.current_ > 0 && ((V_.t_spk + 2 * V_.d_dt) < t_final * V_.time_scale_)) {
+	      if ( V_.out.size() > 2 && S_.current_ < corpre && S_.current_ > 0 && ((V_.t_spk + 2 * V_.d_dt) < t_final_time)) {
 		teta = (V_.out[V_.out.size()-1] / (corpre / V_.sc_)) * (1/V_.dt-P_.delta1_)
 		  -(V_.out[V_.out.size()-2] / ((corpre / V_.sc_)*V_.dt))
 		  -P_.delta1_ / (corpre / V_.sc_) -1;
 		if (teta < 0) {teta = 0;}
 		S_.Idep_ini_ = S_.Iadap_ini_ + teta * (S_.current_/ V_.sc_) / P_.bet_;
-		v_ini = migliV(t_final, P_.delta1_, V_.psi1,
+		v_ini = migliV(local_time_step, P_.delta1_, V_.psi1,
 			       S_.current_/V_.sc_, P_.bet_,
 			       S_.Iadap_ini_, S_.Idep_ini_,
-			       t0_val, v_ini, S_.r_ref_, V_.vrm);
-		S_.Iadap_ini_ = Iadap(t_final, P_.delta1_, V_.psi1,
+			       v_ini, S_.r_ref_, V_.vrm);
+		S_.Iadap_ini_ = Iadap(local_time_step, P_.delta1_, V_.psi1,
 				      S_.current_ / V_.sc_, P_.bet_, S_.Iadap_ini_,
-				      S_.Idep_ini_, t0_val, v_ini, S_.r_ref_);
-		S_.Idep_ini_ = Idep(t_final, P_.bet_, S_.Idep_ini_, t0_val, S_.r_ref_);
+				      S_.Idep_ini_, v_ini, S_.r_ref_);
+		S_.Idep_ini_ = Idep(local_time_step, P_.bet_, S_.Idep_ini_, S_.r_ref_);
 	      } else {
 		if (S_.current_ > 0) {
-		  v_ini = migliV(t_final, P_.delta1_, V_.psi1,
+		  v_ini = migliV(local_time_step, P_.delta1_, V_.psi1,
 				 S_.current_/V_.sc_, P_.bet_,
 				 S_.Iadap_ini_, S_.Idep_ini_,
-				 t0_val, v_ini, S_.r_ref_, V_.vrm);
-		  S_.Iadap_ini_ = Iadap(t_final, P_.delta1_, V_.psi1,
+				 v_ini, S_.r_ref_, V_.vrm);
+		  S_.Iadap_ini_ = Iadap(local_time_step, P_.delta1_, V_.psi1,
 					S_.current_ / V_.sc_, P_.bet_, S_.Iadap_ini_,
-					S_.Idep_ini_, t0_val, v_ini, S_.r_ref_);
-		  S_.Idep_ini_ = Idep(t_final, P_.bet_, S_.Idep_ini_, t0_val, S_.r_ref_);
+					S_.Idep_ini_, v_ini, S_.r_ref_);
+		  S_.Idep_ini_ = Idep(local_time_step, P_.bet_, S_.Idep_ini_, S_.r_ref_);
 	      }
 	    }
 	    if (corpre != S_.current_ && (S_.current_ < 0 && S_.current_ > P_.mincurr_))
@@ -976,7 +974,7 @@ namespace nest
 	    
 	    V_.blockActive = false;
 
-	    S_.init_sign_ = t_final;
+	    S_.init_sign_ = t_final_time;
 	    S_.Idep_ini_ = std::max(P_.Idep_ini_vr_, P_.cost_idep_ini_*(S_.current_ - V_.I_th_));
 	    S_.Iadap_ini_ = 0;                
 	    v_ini = default_v_ini(S_.current_, P_.zeta_, P_.rho_ );
@@ -997,8 +995,8 @@ namespace nest
 
 	// Plot VM for debugging latency divergence
 	if ( P_.plotit_ ) {
-	  if ( t_final * V_.time_scale_ > 1322 ) {
-	    std::cout << "t_final = " << t_final << ", t = " << t_final * V_.time_scale_ << ", v_ini = " << v_ini * V_.Vconvfact << ", V_m = " << S_.V_m_ << ", th = " << P_.V_th_ << "\n";
+	  if ( t_final_time > 1397 ) {
+	    std::cout << std::setprecision(10) << "t_final_time = " << t_final_time << ", t = " << t_final * V_.time_scale_ << ", t_step = " << t_final-t0_val << ", v_ini = " << v_ini * V_.Vconvfact << ", V_m = " << S_.V_m_ << ", th = " << P_.V_th_ << "\n";
 	  }
 	}
 
@@ -1011,7 +1009,7 @@ namespace nest
 
 	    S_.r_ref_ = V_.RefractoryCounts_; // Inizialize refractory
 
-	    V_.t_spk = t_final * V_.time_scale_;
+	    V_.t_spk = t_final_time;
 	    // f.write(str(round(t_spk, 3)) + ' \n')
 	    S_.V_m_ = P_.Vres_; // -65
 	    v_ini = V_.vrm;
@@ -1022,11 +1020,11 @@ namespace nest
 	    if (S_.current_ < P_.istim_min_spikinig_exp_ || S_.current_ > P_.istim_max_spikinig_exp_)
 	      {
 		c_aux = P_.c_;
-		S_.Iadap_ini_ = monod((t_final-S_.init_sign_) * V_.time_scale_,
+		S_.Iadap_ini_ = monod((t_final_time - S_.init_sign_),
 				      P_.a_, P_.b_ * S_.current_/1000, P_.c_, P_.alp_);
 	      } else {
 	      // orig parameters
-	      S_.Iadap_ini_ = monod((t_final - S_.init_sign_) * V_.time_scale_, P_.a_, P_.b_ * S_.current_ / 1000, P_.c_, P_.alp_);
+	      S_.Iadap_ini_ = monod((t_final_time - S_.init_sign_), P_.a_, P_.b_ * S_.current_ / 1000, P_.c_, P_.alp_);
 	      // print('Iadap_ini: ',Iadap_ini)
 	      if (S_.Iadap_ini_<0) {
 		// print('monod negativa')
@@ -1037,7 +1035,7 @@ namespace nest
 		} else {
 		  c_aux = -P_.a_ * exp(P_.b_ * S_.current_ / 1000);
 		}
-		S_.Iadap_ini_ = monod((t_final-S_.init_sign_) * V_.time_scale_, P_.a_, P_.b_ * S_.current_/1000, c_aux, P_.alp_);
+		S_.Iadap_ini_ = monod((t_final_time - S_.init_sign_), P_.a_, P_.b_ * S_.current_/1000, c_aux, P_.alp_);
 	      }
 	    }
 			  
@@ -1062,6 +1060,7 @@ namespace nest
 	}
 	t0_val = t_final;
 	t_final = t0_val + local_time_step;
+	t_final_time = t_final_time + V_.d_dt;
       }
     S_.sis_++;
   }
