@@ -648,6 +648,7 @@ const Name vinc_inf( "vinc_inf" );
 const Name vinc_sup( "vinc_sup" );  
 const Name zeta( "zeta" );
 const Name csi( "csi" );
+const Name plotit( "plotit" );
 } // namespace names
 
 } // namespace nest

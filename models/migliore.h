@@ -234,7 +234,8 @@ private:
     double eta_;
     double rho_;
     double csi_;
-
+    bool plotit_;
+    
     /** External DC current */
     double I_e_;
 

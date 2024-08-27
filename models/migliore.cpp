@@ -151,6 +151,7 @@ namespace nest
     , eta_ ( 2.5e-3 )
     , rho_ ( 1e-3 )
     , csi_ ( 3.5e-3 )
+    , plotit_ ( false )
   {
   }
 
@@ -219,6 +220,7 @@ namespace nest
     def< double >( d, names::eta,  eta_ );
     def< double >( d, names::rho, rho_ );
     def< double >( d, names::csi, csi_ );
+    def< bool >( d, names::plotit, plotit_ );
 
     def< int >( d, names::n_synapses, n_receptors_() );
     def< bool >( d, names::has_connections, has_connections_ );
@@ -277,6 +279,7 @@ namespace nest
     updateValueParam< double >( d, names::eta, eta_, node );
     updateValueParam< double >( d, names::rho, rho_, node );
     updateValueParam< double >( d, names::csi, csi_, node );
+    updateValueParam< bool >( d, names::plotit, plotit_, node );
 
     if ( t_ref_ < 0 )
       {
@@ -804,10 +807,9 @@ namespace nest
     assert( from < to );
 
     double t0_val = origin.get_ms() / V_.time_scale_;
-    double absolute_time;
-    double local_time_step = V_.dt;// / (to - 1);
+    double local_time_step = V_.dt;
     double t_final = t0_val + local_time_step;
-	  
+    std::cout << "from " << from << " to " << to << " V_.d_dt " << V_.d_dt << "\n";
 	  
     double v_ini = set_v_ini(S_.V_m_ / V_.Vconvfact,S_.r_ref_, V_.vrm);
     double vini_prec = v_ini;
@@ -866,7 +868,6 @@ namespace nest
 	// timess = t_final * V_.time_scale_;
 	// t0_val = t_final;
 	// t_final = t0_val + local_time_step ;//Time::step( origin.get_steps() + lag + 1 );
-	absolute_time = ( origin.get_steps() + lag) * V_.d_dt;
 	if ((t_final-S_.init_sign_)*V_.time_scale_ >= nest::migliore::tagliorette(S_.current_) and V_.blockActive)
 	  {
 	    if (S_.current_ > V_.I_th_)
@@ -994,6 +995,13 @@ namespace nest
 	// lower bound of membrane potential REMOVED in 041 version
 	// S_.V_m_ = ( S_.V_m_ < P_.V_min_ ? P_.V_min_ : S_.V_m_ );
 
+	// Plot VM for debugging latency divergence
+	if ( P_.plotit_ ) {
+	  if ( t_final * V_.time_scale_ > 1322 ) {
+	    std::cout << "t_final = " << t_final << ", t = " << t_final * V_.time_scale_ << ", v_ini = " << v_ini * V_.Vconvfact << ", V_m = " << S_.V_m_ << ", th = " << P_.V_th_ << "\n";
+	  }
+	}
+
 	// threshold crossing
 	if ( S_.V_m_ >= P_.V_th_ )
 	  {
@@ -1052,8 +1060,8 @@ namespace nest
 	  B_.logger_.record_data( origin.get_steps() + lag );
 	  }
 	}
-	// // voltage logging
-	// B_.logger_.record_data( origin.get_steps() + lag );
+	t0_val = t_final;
+	t_final = t0_val + local_time_step;
       }
     S_.sis_++;
   }

@@ -674,6 +674,7 @@ extern const Name vinc_inf;
 extern const Name vinc_sup;
 extern const Name zeta;
 extern const Name csi;
+extern const Name plotit;
 } // namespace names
 
 } // namespace nest
