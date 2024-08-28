@@ -550,6 +550,7 @@ namespace nest
 	V_.syn_slow_factor_[ i ] = 1 / V_.syn_slow_factor_[ i ];
 	
       }
+    std::cout << std::setprecision(10) << "V_.P11_syn_slow_decay_[ 0 ] " << V_.P11_syn_slow_decay_[ 0 ] << " V_.P11_syn_slow_rise_[ 0 ] " << V_.P11_syn_slow_rise_[ 0 ] << "\n";
     V_.RefractoryCounts_ = Time( Time::ms( P_.t_ref_ ) ).get_steps();
     // since t_ref_ >= 0, this can only fail in error
     assert( V_.RefractoryCounts_ >= 0 );
@@ -717,7 +718,7 @@ namespace nest
   migliore::default_v_ini(double cor_i, double zeta_eta_csi, double rho)
   {
     //v_ini = ((EL + (1 - np.exp(-(zeta*1000*cor[i] - rho*1000*ith)/1000) )*(vtm - EL))/(-EL))
-    double to_return = ((P_.E_L_ + (1 - exp(-(zeta_eta_csi * 1000 * cor_i - rho * 1000 * V_.I_th_) / 1000) )
+    double to_return = ((P_.E_L_ + (1 - exp(-(zeta_eta_csi * cor_i - rho * V_.I_th_)) )
 			 *(P_.V_th_ - P_.E_L_))/(-P_.E_L_));
     return set_v_ini(to_return, S_.r_ref_, V_.vrm);
   }
@@ -863,6 +864,11 @@ namespace nest
 		  P_.NMDA_ratio_ *
 		  mgblock(S_.V_m_); // not sure about this
 	      }
+	    if ( P_.plotit_ ) {
+	      if ( t_final_time > 0.0 ) {
+		std::cout << std::setprecision(10) << "Syn " <<  S_.i_syn_fast_decay_B_[ 0 ] << " " << S_.i_syn_fast_rise_A_[ 0 ] << " " << S_.i_syn_slow_decay_B_[ 0 ] << " " << S_.i_syn_slow_rise_A_[ 0 ] << "\n";
+	      }
+	    }
 	    S_.i_syn_[ i ] = S_.i_syn_fast_decay_B_[ i ] - S_.i_syn_fast_rise_A_[ i ] + S_.i_syn_slow_decay_B_[ i ] - S_.i_syn_slow_rise_A_[ i ];
 	  }
 
@@ -891,7 +897,7 @@ namespace nest
 	      {
 		if (S_.current_ < V_.I_th_ && S_.current_ > 0) {
 		  v_ini = default_v_ini(S_.current_, P_.eta_, 0 );
-		} else if (S_.current_<=0) {
+		} else if (S_.current_ <= 0) {
 		  v_ini = default_v_ini(S_.current_, P_.csi_, 0 );
 		} else {
 		  v_ini = default_v_ini(S_.current_, P_.zeta_, P_.rho_ );
@@ -909,6 +915,14 @@ namespace nest
 
 	    // voltage logging
 	    B_.logger_.record_data( origin.get_steps() + lag );
+
+	    // Plot VM for debugging latency divergence
+	    if ( P_.plotit_ ) {
+	      if ( t_final_time > 0.0 ) {
+		std::cout << std::setprecision(10) << "TAGLIORETTE t_final_time = " << t_final_time << ", t = " << t_final * V_.time_scale_ << ", t_step = " << t_final-t0_val << ", v_ini = " << v_ini * V_.Vconvfact << ", V_m = " << S_.V_m_ << ", Current = " << S_.current_ << "\n";
+	      }
+	    }
+	    
 
 	  } else {
 	  vini_prec = v_ini;
@@ -995,8 +1009,8 @@ namespace nest
 
 	// Plot VM for debugging latency divergence
 	if ( P_.plotit_ ) {
-	  if ( t_final_time > 1397 ) {
-	    std::cout << std::setprecision(10) << "t_final_time = " << t_final_time << ", t = " << t_final * V_.time_scale_ << ", t_step = " << t_final-t0_val << ", v_ini = " << v_ini * V_.Vconvfact << ", V_m = " << S_.V_m_ << ", th = " << P_.V_th_ << "\n";
+	  if ( t_final_time > 0.0 ) {
+	    std::cout << std::setprecision(10) << "t_final_time = " << t_final_time << ", t = " << t_final * V_.time_scale_ << ", t_step = " << t_final-t0_val << ", v_ini = " << v_ini * V_.Vconvfact << ", V_m = " << S_.V_m_ << ", Current = " << S_.current_ << "\n";
 	  }
 	}
 
