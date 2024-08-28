@@ -129,10 +129,10 @@ namespace nest
     , istim_max_spikinig_exp_( 1000 )
     , I_e_( 0.0 ) // pA
     , t_ref_( 2.0 ) // in ms
-    , tau_syn_fast_rise_ ( 0.1, 0.1 ) // in ms
-    , tau_syn_fast_decay_ ( 3.0, 10.0 ) // in ms
-    , tau_syn_slow_rise_ ( 0.1, 0.1 ) // in ms
-    , tau_syn_slow_decay_ ( 3.0, 10.0 ) // in ms
+    , tau_syn_fast_rise_ ( 1.3, 1.0 ) // in ms
+    , tau_syn_fast_decay_ ( 4.12, 3.0 ) // in ms
+    , tau_syn_slow_rise_ ( 8.0, 1.0 ) // in ms
+    , tau_syn_slow_decay_ ( 148.5, 3.0 ) // in ms
     , has_connections_( false )
     , NMDA_ratio_( 1.22 ) // 2 mM in the Johnston et al. 2010, extracellula [MgCl2] = 1 mM in Edelman et al. 2015
     , mg_( 2.0) // 2 mM in the Johnston et al. 2010, extracellula [MgCl2] = 1 mM in Edelman et al. 2015
