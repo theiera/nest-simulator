@@ -129,10 +129,10 @@ namespace nest
     , istim_max_spikinig_exp_( 1000 )
     , I_e_( 0.0 ) // pA
     , t_ref_( 2.0 ) // in ms
-    , tau_syn_fast_rise_ ( 1.3, 1.0 ) // in ms
-    , tau_syn_fast_decay_ ( 4.12, 3.0 ) // in ms
-    , tau_syn_slow_rise_ ( 8.0, 1.0 ) // in ms
-    , tau_syn_slow_decay_ ( 148.5, 3.0 ) // in ms
+    , tau_syn_fast_rise_ ( 0.1, 0.1 ) // in ms
+    , tau_syn_fast_decay_ ( 3.0, 10.0 ) // in ms
+    , tau_syn_slow_rise_ ( 0.1, 0.1 ) // in ms
+    , tau_syn_slow_decay_ ( 3.0, 10.0 ) // in ms
     , has_connections_( false )
     , NMDA_ratio_( 1.22 ) // 2 mM in the Johnston et al. 2010, extracellula [MgCl2] = 1 mM in Edelman et al. 2015
     , mg_( 2.0) // 2 mM in the Johnston et al. 2010, extracellula [MgCl2] = 1 mM in Edelman et al. 2015
@@ -863,12 +863,12 @@ namespace nest
 		  V_.syn_slow_factor_[ i ] *
 		  P_.NMDA_ratio_ *
 		  mgblock(S_.V_m_); // not sure about this
+		if ( P_.plotit_ ) {
+		  if ( t_final_time > 0 ) { //1870.0 && t_final_time < 19.0  ) {
+		    std::cout << std::setprecision(15) << "t " << t_final_time << " Syn " <<  S_.i_syn_fast_decay_B_[ 0 ] << " " << S_.i_syn_fast_rise_A_[ 0 ] << " " << S_.i_syn_slow_decay_B_[ 0 ] << " " << S_.i_syn_slow_rise_A_[ 0 ] << " MgBlock " << mgblock(S_.V_m_) << " S_.V_m_ " << S_.V_m_ << "\n";
+		  }
+		}
 	      }
-	    if ( P_.plotit_ ) {
-	      if ( t_final_time > 0.0 ) {
-		std::cout << std::setprecision(10) << "Syn " <<  S_.i_syn_fast_decay_B_[ 0 ] << " " << S_.i_syn_fast_rise_A_[ 0 ] << " " << S_.i_syn_slow_decay_B_[ 0 ] << " " << S_.i_syn_slow_rise_A_[ 0 ] << "\n";
-	      }
-	    }
 	    S_.i_syn_[ i ] = S_.i_syn_fast_decay_B_[ i ] - S_.i_syn_fast_rise_A_[ i ] + S_.i_syn_slow_decay_B_[ i ] - S_.i_syn_slow_rise_A_[ i ];
 	  }
 
