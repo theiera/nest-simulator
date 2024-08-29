@@ -793,6 +793,12 @@ namespace nest
     return to_return;
   }
 
+  bool
+  migliore::debugit(bool p, bool plotit, double t)
+  {
+    return ( p && plotit && ((t > 1036.0 && t < 1256.0) || (t > 1063.0 && t < 1256.0+27.0)));
+  }
+
   double
   migliore::mgblock(double v)
   {
@@ -825,7 +831,8 @@ namespace nest
     // double vmss, timess;
     double paramL_;
     double input_spike;
-	  
+    bool debug = true;
+    
     // evolve from timestep 'from' to timestep 'to' with steps of h each
     for ( long lag = from; lag < to; ++lag )
       {
@@ -845,13 +852,22 @@ namespace nest
 	for ( size_t i = 0; i < P_.n_receptors_(); i++ )
 	  {
 	    // exponential decaying PSCs
+	    if ( i == 0 && debugit(debug, P_.plotit_, t_final_time)) {
+	      std::cout << std::setprecision(20) << " fast_rise_A" << S_.i_syn_fast_rise_A_[ i ] << "\n";
+	      }
 	    S_.i_syn_fast_rise_A_[ i ] *= V_.P11_syn_fast_rise_[ i ];
+	    if ( i == 0 && debugit(debug, P_.plotit_, t_final_time)) {
+	      std::cout << std::setprecision(20) << " input_spike " << input_spike << " fast_rise_A" << S_.i_syn_fast_rise_A_[ i ] << "\n";
+	      }
 	    S_.i_syn_fast_decay_B_[ i ] *= V_.P11_syn_fast_decay_[ i ];
 	    S_.i_syn_slow_rise_A_[ i ] *= V_.P11_syn_slow_rise_[ i ];
 	    S_.i_syn_slow_decay_B_[ i ] *= V_.P11_syn_slow_decay_[ i ];
 	    // collect spikes
 	    input_spike = B_.spikes_[ i ].get_value( lag );
 	    S_.i_syn_fast_rise_A_[ i ] += input_spike * V_.syn_fast_factor_[ i ]; // not sure about this
+	    if ( i == 0 && debugit(debug, P_.plotit_, t_final_time)) {
+	      std::cout << std::setprecision(20) << " input_spike " << input_spike << " fast_rise_A" << S_.i_syn_fast_rise_A_[ i ] << "\n";
+	      }
 	    S_.i_syn_fast_decay_B_[ i ] += input_spike * V_.syn_fast_factor_[ i ]; // not sure about this
 	    if ( i == 0 )
 	      {
@@ -863,13 +879,11 @@ namespace nest
 		  V_.syn_slow_factor_[ i ] *
 		  P_.NMDA_ratio_ *
 		  mgblock(S_.V_m_); // not sure about this
-		if ( P_.plotit_ ) {
-		  if ( t_final_time > 0 ) { //1870.0 && t_final_time < 19.0  ) {
-		    std::cout << std::setprecision(15) << "t " << t_final_time << " Syn " <<  S_.i_syn_fast_decay_B_[ 0 ] << " " << S_.i_syn_fast_rise_A_[ 0 ] << " " << S_.i_syn_slow_decay_B_[ 0 ] << " " << S_.i_syn_slow_rise_A_[ 0 ] << " MgBlock " << mgblock(S_.V_m_) << " S_.V_m_ " << S_.V_m_ << "\n";
-		  }
-		}
 	      }
 	    S_.i_syn_[ i ] = S_.i_syn_fast_decay_B_[ i ] - S_.i_syn_fast_rise_A_[ i ] + S_.i_syn_slow_decay_B_[ i ] - S_.i_syn_slow_rise_A_[ i ];
+	    if ( i == 0 && debugit(debug, P_.plotit_, t_final_time)) {
+	    std::cout << std::setprecision(20) << "i " << i << ", t " << t_final_time << " Syn " <<  S_.i_syn_fast_decay_B_[ i ] << " " << S_.i_syn_fast_rise_A_[ i ] << " " << S_.i_syn_slow_decay_B_[ i ] << " " << S_.i_syn_slow_rise_A_[ i ] << " MgBlock " << mgblock(S_.V_m_) << " S_.V_m_ " << S_.V_m_ << ", I_syn " << S_.i_syn_[ i ] << "\n";
+	      }
 	  }
 
 	if ((t_final_time - S_.init_sign_) >= nest::migliore::tagliorette(S_.current_) and V_.blockActive)
@@ -917,25 +931,28 @@ namespace nest
 	    B_.logger_.record_data( origin.get_steps() + lag );
 
 	    // Plot VM for debugging latency divergence
-	    if ( P_.plotit_ ) {
-	      if ( t_final_time > 0.0 ) {
-		std::cout << std::setprecision(10) << "TAGLIORETTE t_final_time = " << t_final_time << ", t = " << t_final * V_.time_scale_ << ", t_step = " << t_final-t0_val << ", v_ini = " << v_ini * V_.Vconvfact << ", V_m = " << S_.V_m_ << ", Current = " << S_.current_ << "\n";
-	      }
+	    if (debugit(debug, P_.plotit_, t_final_time)) {
+	      std::cout << std::setprecision(20) << "TAGLIORETTE t_final_time = " << t_final_time << ", t = " << t_final * V_.time_scale_ << ", t_step = " << t_final-t0_val << ", v_ini = " << v_ini * V_.Vconvfact << ", V_m = " << S_.V_m_ << ", Current = " << S_.current_ << "\n";
 	    }
-	    
-
 	  } else {
+	  if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "NO TAGLIORETTE\n";}
 	  vini_prec = v_ini;
 	  if ((S_.current_ < V_.I_th_ && S_.current_ >= 0) || S_.sis_ == 0)
 	    {
+	      if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "1\n";}
 	      v_ini = default_v_ini(S_.current_, P_.eta_, 0 );
 	    } else
 	    {
+	      if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "2\n";}
 	      if ( V_.out.size() > 2 && S_.current_ < corpre && S_.current_ > 0 && ((V_.t_spk + 2 * V_.d_dt) < t_final_time)) {
+		if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "2.1\n";}
 		teta = (V_.out[V_.out.size()-1] / (corpre / V_.sc_)) * (1/V_.dt-P_.delta1_)
 		  -(V_.out[V_.out.size()-2] / ((corpre / V_.sc_)*V_.dt))
 		  -P_.delta1_ / (corpre / V_.sc_) -1;
-		if (teta < 0) {teta = 0;}
+		if (teta < 0) {
+		if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "2.1.1\n";}
+		  teta = 0;
+		}
 		S_.Idep_ini_ = S_.Iadap_ini_ + teta * (S_.current_/ V_.sc_) / P_.bet_;
 		v_ini = migliV(local_time_step, P_.delta1_, V_.psi1,
 			       S_.current_/V_.sc_, P_.bet_,
@@ -946,7 +963,16 @@ namespace nest
 				      S_.Idep_ini_, v_ini, S_.r_ref_);
 		S_.Idep_ini_ = Idep(local_time_step, P_.bet_, S_.Idep_ini_, S_.r_ref_);
 	      } else {
+		if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "2.2\n";}
 		if (S_.current_ > 0) {
+		  if  (debugit(debug, P_.plotit_, t_final_time)) {
+		    std::cout << "2.2.1\n";
+		    std::cout << local_time_step << " " << P_.delta1_ << " " << V_.psi1 << " " << 
+		      S_.current_/V_.sc_ << " " << P_.bet_ << " " << 
+		      S_.Iadap_ini_ << " " << S_.Idep_ini_ << " " << 
+		      v_ini << " " << S_.r_ref_ << " " << V_.vrm << "\n";
+		  }
+		  
 		  v_ini = migliV(local_time_step, P_.delta1_, V_.psi1,
 				 S_.current_/V_.sc_, P_.bet_,
 				 S_.Iadap_ini_, S_.Idep_ini_,
@@ -959,33 +985,42 @@ namespace nest
 	    }
 	    if (corpre != S_.current_ && (S_.current_ < 0 && S_.current_ > P_.mincurr_))
 	      {
+		if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "2.3\n";}
 		v_ini = set_v_ini(vini_prec, S_.r_ref_, V_.vrm);
 	      }
 	    if (S_.current_ < 0 && S_.current_ > P_.mincurr_)
 	      {
+		if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "2.4\n";}
 		v_ini = default_v_ini(S_.current_, P_.csi_, 0 );
 	      }
 	    if (corpre != S_.current_  && S_.current_ <= P_.mincurr_){
+	      if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "2.5\n";}
 	      S_.Iadap_ini_ = -P_.V_min_ / P_.E_L_ + 1;
 	      S_.Idep_ini_ = 0;
 	      v_ini = default_v_ini(S_.current_, P_.csi_, 0 );
 	    }
 	    if (S_.current_ <= P_.mincurr_) {
+		if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "2.6\n";}
 	      v_ini = V_.V_star_min_;
 	    }
 	  }
 	  if (v_ini * V_.Vconvfact < P_.V_min_){
+	    if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "3\n";}
 	    v_ini = P_.V_min_ / V_.Vconvfact;
 	    S_.Iadap_ini_ = P_.Iadap_start_;
 	  }
 
 
 	// Count down for refractory period
-	if (S_.r_ref_ > 0) {--S_.r_ref_;}
+	if (S_.r_ref_ > 0) {
+	  if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "4\n";}
+	  --S_.r_ref_;
+	}
 
 	if (S_.current_ > V_.I_th_) {
+	  if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "5\n";}
 	  if (corpre < V_.I_th_) {
-	    
+	    if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "5.1\n";}
 	    V_.blockActive = false;
 
 	    S_.init_sign_ = t_final_time;
@@ -993,6 +1028,7 @@ namespace nest
 	    S_.Iadap_ini_ = 0;                
 	    v_ini = default_v_ini(S_.current_, P_.zeta_, P_.rho_ );
 	    if (S_.current_<1e-11) {
+	      if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "5.1.1\n";}
 	      v_ini = -1;
 	    }
 	  }
@@ -1002,21 +1038,21 @@ namespace nest
 	S_.V_m_ = v_ini * V_.Vconvfact;
 	while (V_.out.size() > 3)
 	  {
+	    if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "6\n";}
 	    V_.out.erase(V_.out.begin());
 	  }
 	// lower bound of membrane potential REMOVED in 041 version
 	// S_.V_m_ = ( S_.V_m_ < P_.V_min_ ? P_.V_min_ : S_.V_m_ );
 
 	// Plot VM for debugging latency divergence
-	if ( P_.plotit_ ) {
-	  if ( t_final_time > 0.0 ) {
-	    std::cout << std::setprecision(10) << "t_final_time = " << t_final_time << ", t = " << t_final * V_.time_scale_ << ", t_step = " << t_final-t0_val << ", v_ini = " << v_ini * V_.Vconvfact << ", V_m = " << S_.V_m_ << ", Current = " << S_.current_ << "\n";
-	  }
+	if (debugit(debug, P_.plotit_, t_final_time)) {
+	    std::cout << std::setprecision(20) << "t_final_time = " << t_final_time << ", t = " << t_final * V_.time_scale_ << ", t_step = " << t_final-t0_val << ", v_ini = " << v_ini * V_.Vconvfact << ", V_m = " << S_.V_m_ << ", Current = " << S_.current_ << "\n\n";
 	}
 
 	// threshold crossing
 	if ( S_.V_m_ >= P_.V_th_ )
 	  {
+	    if (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "7\n";}
 	    // S_.V_m_ = P_.V_th_; This is for output graphic so that alla spikes have the same height ASK MICHELE!!!
 	    // voltage logging
 	    B_.logger_.record_data( origin.get_steps() + lag );

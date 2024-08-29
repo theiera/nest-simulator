@@ -175,7 +175,7 @@ private:
   double exp_cum(double, double, double);
   double monod(double, double, double, double, double);
   double mgblock(double);
-  
+  bool debugit(bool, bool, double);
   void update( const Time&, const long, const long ) override;
 
   // The next two classes need to be friends to access the State_ class/member
