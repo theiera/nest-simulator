@@ -789,6 +789,8 @@ namespace nest
   double
   migliore::monod(double x, double a, double b, double c, double alp)
   {
+    // 		S_.Iadap_ini_ = monod((t_final_time - S_.init_sign_), P_.a_, P_.b_ * S_.current_/1000, P_.c_, P_.alp_);
+
     double to_return = c + (a * exp(b) * x) / (alp + x);
     return to_return;
   }
@@ -796,7 +798,10 @@ namespace nest
   bool
   migliore::debugit(bool p, bool plotit, double t)
   {
-    return ( p && plotit && ((t > 1036.0 && t < 1256.0) || (t > 1063.0 && t < 1256.0+27.0)));
+    double first_in_1003 = 1500.0; //2030;
+    double latency = 3000.0; //27.0;
+    // return ( p && plotit && ((t > first_in_1003 && t < first_in_1003+2) || (t > first_in_1003+latency && t < first_in_1003+latency+2.0)));
+    return ( p && plotit && ((t > first_in_1003 && t < first_in_1003+latency+2) ));
   }
 
   double
@@ -813,11 +818,12 @@ namespace nest
     //assert( to >= 0 && ( delay ) from < kernel().connection_manager.get_min_delay() );
     assert( from < to );
 
-    double t0_val = origin.get_ms() / V_.time_scale_;
+    double t0_val = std::round( origin.get_ms() * 10000.0 ) / 10000.0 / V_.time_scale_;
     double local_time_step = V_.dt;
     double t_final = t0_val + local_time_step;
-    double t_final_time = origin.get_ms() + V_.d_dt;
-    
+    double t_final_time = std::round( origin.get_ms() * 10000.0 ) / 10000.0 + V_.d_dt;
+    bool debug = true;
+    if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "Only_t_final_time " << t_final_time << "\n";}
     // std::cout << std::setprecision(10) << "from " << from << " to " << to << " V_.d_dt " << V_.d_dt << "\n";
 	  
     double v_ini = set_v_ini(S_.V_m_ / V_.Vconvfact,S_.r_ref_, V_.vrm);
@@ -830,8 +836,7 @@ namespace nest
     // double current;
     // double vmss, timess;
     double paramL_;
-    double input_spike;
-    bool debug = true;
+    double input_spike = 0;
     
     // evolve from timestep 'from' to timestep 'to' with steps of h each
     for ( long lag = from; lag < to; ++lag )
@@ -856,16 +861,14 @@ namespace nest
 	      std::cout << std::setprecision(20) << " fast_rise_A" << S_.i_syn_fast_rise_A_[ i ] << "\n";
 	      }
 	    S_.i_syn_fast_rise_A_[ i ] *= V_.P11_syn_fast_rise_[ i ];
-	    if ( i == 0 && debugit(debug, P_.plotit_, t_final_time)) {
-	      std::cout << std::setprecision(20) << " input_spike " << input_spike << " fast_rise_A" << S_.i_syn_fast_rise_A_[ i ] << "\n";
-	      }
 	    S_.i_syn_fast_decay_B_[ i ] *= V_.P11_syn_fast_decay_[ i ];
 	    S_.i_syn_slow_rise_A_[ i ] *= V_.P11_syn_slow_rise_[ i ];
 	    S_.i_syn_slow_decay_B_[ i ] *= V_.P11_syn_slow_decay_[ i ];
 	    // collect spikes
-	    input_spike = B_.spikes_[ i ].get_value( lag );
+	    input_spike = std::round( B_.spikes_[ i ].get_value( lag ) * 1000.0 ) / 1000.0;
+	    
 	    S_.i_syn_fast_rise_A_[ i ] += input_spike * V_.syn_fast_factor_[ i ]; // not sure about this
-	    if ( i == 0 && debugit(debug, P_.plotit_, t_final_time)) {
+	    if ( i == 0 && debugit(debug, P_.plotit_, t_final_time) && input_spike != 0) {
 	      std::cout << std::setprecision(20) << " input_spike " << input_spike << " fast_rise_A" << S_.i_syn_fast_rise_A_[ i ] << "\n";
 	      }
 	    S_.i_syn_fast_decay_B_[ i ] += input_spike * V_.syn_fast_factor_[ i ]; // not sure about this
@@ -882,15 +885,24 @@ namespace nest
 	      }
 	    S_.i_syn_[ i ] = S_.i_syn_fast_decay_B_[ i ] - S_.i_syn_fast_rise_A_[ i ] + S_.i_syn_slow_decay_B_[ i ] - S_.i_syn_slow_rise_A_[ i ];
 	    if ( i == 0 && debugit(debug, P_.plotit_, t_final_time)) {
-	    std::cout << std::setprecision(20) << "i " << i << ", t " << t_final_time << " Syn " <<  S_.i_syn_fast_decay_B_[ i ] << " " << S_.i_syn_fast_rise_A_[ i ] << " " << S_.i_syn_slow_decay_B_[ i ] << " " << S_.i_syn_slow_rise_A_[ i ] << " MgBlock " << mgblock(S_.V_m_) << " S_.V_m_ " << S_.V_m_ << ", I_syn " << S_.i_syn_[ i ] << "\n";
+	    std::cout << std::setprecision(20) << "i " << i << ", from " << from << ", to " << to << ", lag " << lag << ", t " << t_final_time << " Syn " <<  S_.i_syn_fast_decay_B_[ i ] << " " << S_.i_syn_fast_rise_A_[ i ] << " " << S_.i_syn_slow_decay_B_[ i ] << " " << S_.i_syn_slow_rise_A_[ i ] << " MgBlock " << mgblock(S_.V_m_) << " S_.V_m_ " << S_.V_m_ << ", I_syn " << S_.i_syn_[ i ] << "\n";
 	      }
 	  }
 
 	if ((t_final_time - S_.init_sign_) >= nest::migliore::tagliorette(S_.current_) and V_.blockActive)
 	  {
+	    if  (debugit(debug, P_.plotit_, t_final_time)) {
+	      std::cout << "0\n";
+	      std::cout << "Evolve t_final_time = " << t_final_time << " " << local_time_step << " " << P_.delta1_ << " " << V_.psi1 << " " << 
+		S_.current_/V_.sc_ << " " << P_.bet_ << " " << 
+		S_.Iadap_ini_ << " " << S_.Idep_ini_ << " " << 
+		v_ini << " " << S_.r_ref_ << " " << V_.vrm << "\n";
+	    }
 	    if (S_.current_ > V_.I_th_)
 	      {
+		if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "0.1\n";}
 		if (corpre < V_.I_th_ || S_.sis_ == 0){
+		  if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "0.1.1\n";}
 		  S_.init_sign_ = t_final_time;
 		  S_.Idep_ini_ = std::max(P_.Idep_ini_vr_, P_.cost_idep_ini_*(S_.current_ - V_.I_th_));
 		  S_.Iadap_ini_ = 0;
@@ -906,14 +918,19 @@ namespace nest
 		}
 	      }
 	    if (corpre == 0) {
+	      if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "0.2\n";}
 	      v_ini = set_v_ini(vini_prec, S_.r_ref_, V_.vrm);
 	    } else
 	      {
+		if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "0.3\n";}
 		if (S_.current_ < V_.I_th_ && S_.current_ > 0) {
+		  if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "0.3.1\n";}
 		  v_ini = default_v_ini(S_.current_, P_.eta_, 0 );
 		} else if (S_.current_ <= 0) {
+		  if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "0.3.2\n";}
 		  v_ini = default_v_ini(S_.current_, P_.csi_, 0 );
 		} else {
+		  if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "0.3.2\n";}
 		  v_ini = default_v_ini(S_.current_, P_.zeta_, P_.rho_ );
 		}
 	      }
@@ -943,14 +960,21 @@ namespace nest
 	      v_ini = default_v_ini(S_.current_, P_.eta_, 0 );
 	    } else
 	    {
-	      if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "2\n";}
+	      if  (debugit(debug, P_.plotit_, t_final_time)) {
+		std::cout << "2\n";
+		std::cout << "Evolve t_final_time = " << t_final_time << " " << local_time_step << " " << P_.delta1_ << " " << V_.psi1 << " " << 
+		  S_.current_/V_.sc_ << " " << P_.bet_ << " " << 
+		  S_.Iadap_ini_ << " " << S_.Idep_ini_ << " " << 
+		  v_ini << " " << S_.r_ref_ << " " << V_.vrm << "\n";
+	      }
 	      if ( V_.out.size() > 2 && S_.current_ < corpre && S_.current_ > 0 && ((V_.t_spk + 2 * V_.d_dt) < t_final_time)) {
 		if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "2.1\n";}
 		teta = (V_.out[V_.out.size()-1] / (corpre / V_.sc_)) * (1/V_.dt-P_.delta1_)
 		  -(V_.out[V_.out.size()-2] / ((corpre / V_.sc_)*V_.dt))
 		  -P_.delta1_ / (corpre / V_.sc_) -1;
+		if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "Teta = " << teta << "\n";}
 		if (teta < 0) {
-		if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "2.1.1\n";}
+		  if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "2.1.1\n";}
 		  teta = 0;
 		}
 		S_.Idep_ini_ = S_.Iadap_ini_ + teta * (S_.current_/ V_.sc_) / P_.bet_;
@@ -967,7 +991,7 @@ namespace nest
 		if (S_.current_ > 0) {
 		  if  (debugit(debug, P_.plotit_, t_final_time)) {
 		    std::cout << "2.2.1\n";
-		    std::cout << local_time_step << " " << P_.delta1_ << " " << V_.psi1 << " " << 
+		    std::cout << "Evolve t_final_time = " << t_final_time << " " << local_time_step << " " << P_.delta1_ << " " << V_.psi1 << " " << 
 		      S_.current_/V_.sc_ << " " << P_.bet_ << " " << 
 		      S_.Iadap_ini_ << " " << S_.Idep_ini_ << " " << 
 		      v_ini << " " << S_.r_ref_ << " " << V_.vrm << "\n";
@@ -1069,29 +1093,40 @@ namespace nest
 	    c_aux = P_.c_;
 	    if (S_.current_ < P_.istim_min_spikinig_exp_ || S_.current_ > P_.istim_max_spikinig_exp_)
 	      {
+		if (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "Iadap " << S_.Iadap_ini_ << " 7.1\n";}
 		c_aux = P_.c_;
+		if (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "Monod " << t_final_time << " " << S_.init_sign_ << " " << (t_final_time - S_.init_sign_) << " " << P_.a_ << " " << P_.b_ * S_.current_/1000 << " " << P_.c_ << " " << P_.alp_ << "\n";}
 		S_.Iadap_ini_ = monod((t_final_time - S_.init_sign_),
 				      P_.a_, P_.b_ * S_.current_/1000, P_.c_, P_.alp_);
+		if (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "Iadap " << S_.Iadap_ini_ << " 7.1.1\n";}
 	      } else {
 	      // orig parameters
+	      if (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "Iadap " << S_.Iadap_ini_ << " 7.2\n";}
 	      S_.Iadap_ini_ = monod((t_final_time - S_.init_sign_), P_.a_, P_.b_ * S_.current_ / 1000, P_.c_, P_.alp_);
+	      if (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "Iadap " << S_.Iadap_ini_ << " 7.2.1\n";}
 	      // print('Iadap_ini: ',Iadap_ini)
 	      if (S_.Iadap_ini_<0) {
 		// print('monod negativa')
 		//sinapt
+		if (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "Iadap " << S_.Iadap_ini_ << " 7.3\n";}
 		paramL_ = S_.Iadap_ini_;
 		if (P_.a_ > 0) {
 		  c_aux = P_.c_ - paramL_;
+		  if (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "c_aux " << c_aux << " 7.3.1\n";}
 		} else {
 		  c_aux = -P_.a_ * exp(P_.b_ * S_.current_ / 1000);
+		  if (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "c_aux " << c_aux << " 7.3.2\n";}
 		}
 		S_.Iadap_ini_ = monod((t_final_time - S_.init_sign_), P_.a_, P_.b_ * S_.current_/1000, c_aux, P_.alp_);
+		if (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "Iadap " << S_.Iadap_ini_ << " 7.3.3\n";}
 	      }
 	    }
 			  
 	    if (S_.current_ < V_.I_th_) {
+	      if (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "Iadap " << S_.Iadap_ini_ << " 7.4\n";}
 	      S_.Idep_ini_ = 0;
 	      S_.Iadap_ini_ = P_.Iadap_start_;
+	      if (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "Iadap " << S_.Iadap_ini_ << " 7.3\n";}
 	    } else {
 	      S_.Idep_ini_ = P_.Idep_ini_vr_;
 	    }
