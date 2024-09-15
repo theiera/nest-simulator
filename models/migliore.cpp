@@ -701,16 +701,7 @@ namespace nest
     // double F = -IdA0 * V_.GG + G;
     // double D = V_.JJ * IdA0 - 2 * (alpha - beta + delta) * V_.JJ_3 + V_.JJ_1 * (IdA0 * beta * V_.C * V_.JJ_2 - V_.JJ_4 * (alpha * V_.JJ_5 + V_.C * (-1 + 2 * IaA0 * beta - delta + Psi + V0 * (-1 - delta + Psi)))) + V_.JJ_6 * F;
     //  double D = (2 * exp(((-1) * t + t0) * beta) * IdA0 * (beta - 1) * beta * C * Psi -2 * (alpha - beta + delta) * (beta2 + (beta - 1) * delta) * Psi + exp(0.5 * (t - t0) * ((-1) + delta - Psi)) * (IdA0 * beta * C * ((-1) - delta + beta * (3 + delta - Psi) + Psi) - (beta2 - delta + beta * delta) * (alpha * (1 + (-2) * beta + delta - Psi) + C * ((-1) + 2 * IaA0 * beta - delta + Psi + V0 * ((-1) - delta + Psi)))) + exp(0.5 * (t - t0) * ((-1) + delta + Psi)) * ((-1) * IdA0 * beta * (beta+(-1) * delta) * ((-1) - delta - Psi + beta * (3 + delta + Psi)) + (beta2 - delta+beta * delta) * (alpha * (1 + (-2) * beta + delta + Psi) + C * ((-1) + 2 * IaA0 * beta+(-1) * delta - Psi - V0 * (1 + delta + Psi)))));
-    if (r_ref_ == 0)
-      {
-    	//return 0.5 / C / (beta2 + (beta - 1) * delta) / (4 * beta + (- 1) * pow((1 + delta),2)) * Psi * D;
-    	// return V_.JJ_7 * D;
-    	return to_return;
-      }
-    else
-      {
-    	return vrm;
-      }
+    return set_v_ini(to_return, r_ref_, vrm);
   }
 
 
@@ -729,7 +720,7 @@ namespace nest
   {
     if (r_ref_ == 0)
       {
-    	return to_v_ini;
+    	return round(to_v_ini, 6);
       }
     else
       {
@@ -759,7 +750,7 @@ namespace nest
     // double to_return = AA_13 * D;
     if (r_ref_ == 0)
       {
-    	return to_return;
+    	return round(to_return, 6);
       }
     else
       {
@@ -772,7 +763,7 @@ namespace nest
   {
     if (r_ref_ == 0)
       {
-    	return exp(-(step) * P_.bet_)  * IdA0;
+    	return round(exp(-(step) * P_.bet_)  * IdA0, 6);
       }
     else
       {
@@ -805,6 +796,13 @@ namespace nest
   }
 
   double
+  migliore::round(double value, int precision)
+  {
+    double moltiplier = pow(10, precision);
+    return std::round(value * moltiplier) / moltiplier;
+  }
+
+  double
   migliore::mgblock(double v)
   {
     double block;
@@ -818,10 +816,10 @@ namespace nest
     //assert( to >= 0 && ( delay ) from < kernel().connection_manager.get_min_delay() );
     assert( from < to );
 
-    double t0_val = std::round( origin.get_ms() * 10000.0 ) / 10000.0 / V_.time_scale_;
+    double t0_val = round( origin.get_ms(), 4 ) / V_.time_scale_;
     double local_time_step = V_.dt;
     double t_final = t0_val + local_time_step;
-    double t_final_time = std::round( origin.get_ms() * 10000.0 ) / 10000.0 + V_.d_dt;
+    double t_final_time = round( origin.get_ms(), 4 ) + V_.d_dt;
     bool debug = true;
     if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "Only_t_final_time " << t_final_time << "\n";}
     // std::cout << std::setprecision(10) << "from " << from << " to " << to << " V_.d_dt " << V_.d_dt << "\n";
@@ -865,7 +863,7 @@ namespace nest
 	    S_.i_syn_slow_rise_A_[ i ] *= V_.P11_syn_slow_rise_[ i ];
 	    S_.i_syn_slow_decay_B_[ i ] *= V_.P11_syn_slow_decay_[ i ];
 	    // collect spikes
-	    input_spike = std::round( B_.spikes_[ i ].get_value( lag ) * 1000.0 ) / 1000.0;
+	    input_spike = round( B_.spikes_[ i ].get_value( lag ), 3 );
 	    
 	    S_.i_syn_fast_rise_A_[ i ] += input_spike * V_.syn_fast_factor_[ i ]; // not sure about this
 	    if ( i == 0 && debugit(debug, P_.plotit_, t_final_time) && input_spike != 0) {
@@ -1084,7 +1082,6 @@ namespace nest
 	    S_.r_ref_ = V_.RefractoryCounts_; // Inizialize refractory
 
 	    V_.t_spk = t_final_time;
-	    // f.write(str(round(t_spk, 3)) + ' \n')
 	    S_.V_m_ = P_.Vres_; // -65
 	    v_ini = V_.vrm;
 

@@ -177,7 +177,8 @@ private:
   double mgblock(double);
   bool debugit(bool, bool, double);
   void update( const Time&, const long, const long ) override;
-
+  double round(double, int);
+  
   // The next two classes need to be friends to access the State_ class/member
   friend class DynamicRecordablesMap< migliore >;
   friend class DynamicUniversalDataLogger< migliore >;
