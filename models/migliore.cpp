@@ -782,15 +782,16 @@ namespace nest
   {
     // 		S_.Iadap_ini_ = monod((t_final_time - S_.init_sign_), P_.a_, P_.b_ * S_.current_/1000, P_.c_, P_.alp_);
 
-    double to_return = c + (a * exp(b) * x) / (alp + x);
+    double to_return = round(c + (a * exp(b) * x) / (alp + x), 6);
     return to_return;
   }
 
   bool
   migliore::debugit(bool p, bool plotit, double t)
   {
-    double first_in_1003 = 1500.0; //2030;
-    double latency = 3000.0; //27.0;
+    double first_in_1003 = 1000.0; //2030;
+    double latency = 1500.0; //27.0;
+    // std::cout << "Plotit " << ( p && plotit && ((t > first_in_1003 && t < first_in_1003+latency+2) )) << "\n";
     // return ( p && plotit && ((t > first_in_1003 && t < first_in_1003+2) || (t > first_in_1003+latency && t < first_in_1003+latency+2.0)));
     return ( p && plotit && ((t > first_in_1003 && t < first_in_1003+latency+2) ));
   }
@@ -965,8 +966,15 @@ namespace nest
 		  S_.Iadap_ini_ << " " << S_.Idep_ini_ << " " << 
 		  v_ini << " " << S_.r_ref_ << " " << V_.vrm << "\n";
 	      }
-	      if ( V_.out.size() > 2 && S_.current_ < corpre && S_.current_ > 0 && ((V_.t_spk + 2 * V_.d_dt) < t_final_time)) {
-		if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "2.1\n";}
+	      if ( V_.out.size() > 2 && S_.current_ < corpre && S_.current_ > 0 && (round((V_.t_spk + 2.5 * V_.d_dt),6) < round(t_final_time,6))) {
+		if  (debugit(debug, P_.plotit_, t_final_time)) {
+		  std::cout << "2.1 NEW " <<
+		    (V_.out.size() > 2) << " " << S_.current_ << " " << corpre << " " << (S_.current_ > 0) << " " << (round((V_.t_spk + 2.5 * V_.d_dt),6) < round(t_final_time,6) )<< "\n";
+		  std::cout << "2.1 " <<
+		    V_.out.size() << " " << S_.current_ << " " << corpre << " " << S_.current_ << " " << round((V_.t_spk + 2.5 * V_.d_dt),4) << " " << round(t_final_time,4) << "\n";
+		  std::cout << "teta sources " << V_.out[V_.out.size()-1] << " " << (corpre / V_.sc_) << " " << (1/V_.dt-P_.delta1_) << " " << 
+		    V_.out[V_.out.size()-2] << "\n";
+		}
 		teta = (V_.out[V_.out.size()-1] / (corpre / V_.sc_)) * (1/V_.dt-P_.delta1_)
 		  -(V_.out[V_.out.size()-2] / ((corpre / V_.sc_)*V_.dt))
 		  -P_.delta1_ / (corpre / V_.sc_) -1;
@@ -985,6 +993,11 @@ namespace nest
 				      S_.Idep_ini_, v_ini, S_.r_ref_);
 		S_.Idep_ini_ = Idep(local_time_step, P_.bet_, S_.Idep_ini_, S_.r_ref_);
 	      } else {
+		if  (debugit(debug, P_.plotit_, t_final_time)) {
+		  std::cout << "2.2 " <<
+		    (V_.out.size() > 2) << " " << S_.current_ << " " << corpre << " " << (S_.current_ > 0) << " " << ((V_.t_spk + 2 * V_.d_dt) < t_final_time )<< "\n";
+		  std::cout << "2.2 " << V_.out.size() << " " << S_.current_ << " " << corpre << " " << S_.current_ << " " << (V_.t_spk + 2 * V_.d_dt) << " " << t_final_time << "\n";
+		}
 		if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "2.2\n";}
 		if (S_.current_ > 0) {
 		  if  (debugit(debug, P_.plotit_, t_final_time)) {
