@@ -994,9 +994,12 @@ namespace nest
 		S_.Idep_ini_ = Idep(local_time_step, P_.bet_, S_.Idep_ini_, S_.r_ref_);
 	      } else {
 		if  (debugit(debug, P_.plotit_, t_final_time)) {
+		  std::cout << "2.2 NEW " <<
+		    (V_.out.size() > 2) << " " << S_.current_ << " " << corpre << " " << (S_.current_ > 0) << " " << (round((V_.t_spk + 2.5 * V_.d_dt),6) < round(t_final_time,6) )<< "\n";
 		  std::cout << "2.2 " <<
-		    (V_.out.size() > 2) << " " << S_.current_ << " " << corpre << " " << (S_.current_ > 0) << " " << ((V_.t_spk + 2 * V_.d_dt) < t_final_time )<< "\n";
-		  std::cout << "2.2 " << V_.out.size() << " " << S_.current_ << " " << corpre << " " << S_.current_ << " " << (V_.t_spk + 2 * V_.d_dt) << " " << t_final_time << "\n";
+		    V_.out.size() << " " << S_.current_ << " " << corpre << " " << S_.current_ << " " << round((V_.t_spk + 2.5 * V_.d_dt),4) << " " << round(t_final_time,4) << "\n";
+		  std::cout << "teta sources " << V_.out[V_.out.size()-1] << " " << (corpre / V_.sc_) << " " << (1/V_.dt-P_.delta1_) << " " << 
+		    V_.out[V_.out.size()-2] << "\n";
 		}
 		if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "2.2\n";}
 		if (S_.current_ > 0) {
