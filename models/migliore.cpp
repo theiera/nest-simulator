@@ -550,7 +550,7 @@ namespace nest
 	V_.syn_slow_factor_[ i ] = 1 / V_.syn_slow_factor_[ i ];
 	
       }
-    std::cout << std::setprecision(10) << "V_.P11_syn_slow_decay_[ 0 ] " << V_.P11_syn_slow_decay_[ 0 ] << " V_.P11_syn_slow_rise_[ 0 ] " << V_.P11_syn_slow_rise_[ 0 ] << "\n";
+    // std::cout << std::setprecision(10) << "V_.P11_syn_slow_decay_[ 0 ] " << V_.P11_syn_slow_decay_[ 0 ] << " V_.P11_syn_slow_rise_[ 0 ] " << V_.P11_syn_slow_rise_[ 0 ] << "\n";
     V_.RefractoryCounts_ = Time( Time::ms( P_.t_ref_ ) ).get_steps();
     // since t_ref_ >= 0, this can only fail in error
     assert( V_.RefractoryCounts_ >= 0 );
