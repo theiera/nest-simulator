@@ -720,7 +720,7 @@ namespace nest
   {
     if (r_ref_ == 0)
       {
-    	return round(to_v_ini, 6);
+    	return round(to_v_ini, 9);
       }
     else
       {
@@ -750,7 +750,7 @@ namespace nest
     // double to_return = AA_13 * D;
     if (r_ref_ == 0)
       {
-    	return round(to_return, 6);
+    	return round(to_return, 9);
       }
     else
       {
@@ -763,7 +763,7 @@ namespace nest
   {
     if (r_ref_ == 0)
       {
-    	return round(exp(-(step) * P_.bet_)  * IdA0, 6);
+    	return round(exp(-(step) * P_.bet_)  * IdA0, 9);
       }
     else
       {
@@ -782,14 +782,14 @@ namespace nest
   {
     // 		S_.Iadap_ini_ = monod((t_final_time - S_.init_sign_), P_.a_, P_.b_ * S_.current_/1000, P_.c_, P_.alp_);
 
-    double to_return = round(c + (a * exp(b) * x) / (alp + x), 6);
+    double to_return = round(c + (a * exp(b) * x) / (alp + x), 9);
     return to_return;
   }
 
   bool
   migliore::debugit(bool p, bool plotit, double t)
   {
-    double first_in_1003 = 1000.0; //2030;
+    double first_in_1003 = 0.0; //2030;
     double latency = 1500.0; //27.0;
     // std::cout << "Plotit " << ( p && plotit && ((t > first_in_1003 && t < first_in_1003+latency+2) )) << "\n";
     // return ( p && plotit && ((t > first_in_1003 && t < first_in_1003+2) || (t > first_in_1003+latency && t < first_in_1003+latency+2.0)));
@@ -836,7 +836,7 @@ namespace nest
     // double vmss, timess;
     double paramL_;
     double input_spike = 0;
-    
+
     // evolve from timestep 'from' to timestep 'to' with steps of h each
     for ( long lag = from; lag < to; ++lag )
       {
@@ -888,274 +888,297 @@ namespace nest
 	      }
 	  }
 
-	if ((t_final_time - S_.init_sign_) >= nest::migliore::tagliorette(S_.current_) and V_.blockActive)
+	if ( S_.r_ref_ == 0)
 	  {
-	    if  (debugit(debug, P_.plotit_, t_final_time)) {
-	      std::cout << "0\n";
-	      std::cout << "Evolve t_final_time = " << t_final_time << " " << local_time_step << " " << P_.delta1_ << " " << V_.psi1 << " " << 
-		S_.current_/V_.sc_ << " " << P_.bet_ << " " << 
-		S_.Iadap_ini_ << " " << S_.Idep_ini_ << " " << 
-		v_ini << " " << S_.r_ref_ << " " << V_.vrm << "\n";
-	    }
-	    if (S_.current_ > V_.I_th_)
+	    if ((t_final_time - S_.init_sign_) >= nest::migliore::tagliorette(S_.current_) and V_.blockActive)
 	      {
-		if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "0.1\n";}
-		if (corpre < V_.I_th_ || S_.sis_ == 0){
-		  if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "0.1.1\n";}
-		  S_.init_sign_ = t_final_time;
-		  S_.Idep_ini_ = std::max(P_.Idep_ini_vr_, P_.cost_idep_ini_*(S_.current_ - V_.I_th_));
-		  S_.Iadap_ini_ = 0;
+		if  (debugit(debug, P_.plotit_, t_final_time)) {
+		  std::cout << "0\n";
+		  std::cout << "Evolve t_final_time = " << t_final_time << " " << local_time_step << " " << P_.delta1_ << " " << V_.psi1 << " " << 
+		    S_.current_/V_.sc_ << " " << P_.bet_ << " " << 
+		    S_.Iadap_ini_ << " " << S_.Idep_ini_ << " " << 
+		    v_ini << " " << S_.r_ref_ << " " << V_.vrm << "\n";
+		}
+		if (S_.current_ > V_.I_th_)
+		  {
+		    if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "0.1\n";}
+		    if (corpre < V_.I_th_ || S_.sis_ == 0){
+		      if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "0.1.1\n";}
+		      S_.init_sign_ = t_final_time;
+		      S_.Idep_ini_ = std::max(P_.Idep_ini_vr_, P_.cost_idep_ini_*(S_.current_ - V_.I_th_));
+		      S_.Iadap_ini_ = 0;
 
-		  V_.blockActive = false;
+		      V_.blockActive = false;
 		  
-		  // currCoeff = (S_.current_ - V_.I_th_)/S_.current_; removed from AGLIF_040 when introduced the copies
-		  v_ini = default_v_ini(S_.current_, P_.zeta_, P_.rho_);
-		  v_ini = migliV(local_time_step, P_.delta1_, V_.psi1,
-				 S_.current_/V_.sc_, P_.bet_, S_.Iadap_ini_, S_.Idep_ini_, v_ini, S_.r_ref_, V_.vrm);
-		  S_.Iadap_ini_ = Iadap(local_time_step, P_.delta1_, V_.psi1, S_.current_ / V_.sc_, P_.bet_, S_.Iadap_ini_, S_.Idep_ini_, v_ini, S_.r_ref_);
-		  S_.Idep_ini_ = Idep(local_time_step, P_.bet_, S_.Idep_ini_, S_.r_ref_);
-		}
-	      }
-	    if (corpre == 0) {
-	      if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "0.2\n";}
-	      v_ini = set_v_ini(vini_prec, S_.r_ref_, V_.vrm);
-	    } else
-	      {
-		if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "0.3\n";}
-		if (S_.current_ < V_.I_th_ && S_.current_ > 0) {
-		  if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "0.3.1\n";}
-		  v_ini = default_v_ini(S_.current_, P_.eta_, 0 );
-		} else if (S_.current_ <= 0) {
-		  if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "0.3.2\n";}
-		  v_ini = default_v_ini(S_.current_, P_.csi_, 0 );
-		} else {
-		  if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "0.3.2\n";}
-		  v_ini = default_v_ini(S_.current_, P_.zeta_, P_.rho_ );
-		}
-	      }
-	    vini_prec = v_ini;
-	    V_.out.push_back(v_ini);
-	    S_.V_m_ = v_ini * V_.Vconvfact;
-	    while (V_.out.size() > 3)
-	      {
-		V_.out.erase(V_.out.begin());
-	      }
-	    // Count down for refractory period
-	    if (S_.r_ref_ > 0) {--S_.r_ref_;}
+		      // currCoeff = (S_.current_ - V_.I_th_)/S_.current_; removed from AGLIF_040 when introduced the copies
+		      v_ini = default_v_ini(S_.current_, P_.zeta_, P_.rho_);
+		      v_ini = migliV(local_time_step, P_.delta1_, V_.psi1,
+				     S_.current_/V_.sc_, P_.bet_, S_.Iadap_ini_, S_.Idep_ini_, v_ini, S_.r_ref_, V_.vrm);
+		      S_.Iadap_ini_ = Iadap(local_time_step, P_.delta1_, V_.psi1, S_.current_ / V_.sc_, P_.bet_, S_.Iadap_ini_, S_.Idep_ini_, v_ini, S_.r_ref_);
+		      S_.Idep_ini_ = Idep(local_time_step, P_.bet_, S_.Idep_ini_, S_.r_ref_);
+		    }
+		  }
+		if (corpre == 0) {
+		  if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "0.2\n";}
+		  v_ini = set_v_ini(vini_prec, S_.r_ref_, V_.vrm);
+		} else
+		  {
+		    if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "0.3\n";}
+		    if (S_.current_ < V_.I_th_ && S_.current_ > 0) {
+		      if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "0.3.1\n";}
+		      v_ini = default_v_ini(S_.current_, P_.eta_, 0 );
+		    } else if (S_.current_ <= 0) {
+		      if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "0.3.2\n";}
+		      v_ini = default_v_ini(S_.current_, P_.csi_, 0 );
+		    } else {
+		      if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "0.3.2\n";}
+		      v_ini = default_v_ini(S_.current_, P_.zeta_, P_.rho_ );
+		    }
+		  }
+		vini_prec = v_ini;
+		V_.out.push_back(v_ini);
+		S_.V_m_ = v_ini * V_.Vconvfact;
+		while (V_.out.size() > 3)
+		  {
+		    V_.out.erase(V_.out.begin());
+		  }
+		// Count down for refractory period
+		//if (S_.r_ref_ > 0) {--S_.r_ref_;}
 
-	    // voltage logging
-	    B_.logger_.record_data( origin.get_steps() + lag );
+		// voltage logging
+		B_.logger_.record_data( origin.get_steps() + lag );
 
-	    // Plot VM for debugging latency divergence
-	    if (debugit(debug, P_.plotit_, t_final_time)) {
-	      std::cout << std::setprecision(20) << "TAGLIORETTE t_final_time = " << t_final_time << ", t = " << t_final * V_.time_scale_ << ", t_step = " << t_final-t0_val << ", v_ini = " << v_ini * V_.Vconvfact << ", V_m = " << S_.V_m_ << ", Current = " << S_.current_ << "\n";
-	    }
-	  } else {
-	  if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "NO TAGLIORETTE\n";}
-	  vini_prec = v_ini;
-	  if ((S_.current_ < V_.I_th_ && S_.current_ >= 0) || S_.sis_ == 0)
-	    {
-	      if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "1\n";}
-	      v_ini = default_v_ini(S_.current_, P_.eta_, 0 );
-	    } else
-	    {
-	      if  (debugit(debug, P_.plotit_, t_final_time)) {
-		std::cout << "2\n";
-		std::cout << "Evolve t_final_time = " << t_final_time << " " << local_time_step << " " << P_.delta1_ << " " << V_.psi1 << " " << 
-		  S_.current_/V_.sc_ << " " << P_.bet_ << " " << 
-		  S_.Iadap_ini_ << " " << S_.Idep_ini_ << " " << 
-		  v_ini << " " << S_.r_ref_ << " " << V_.vrm << "\n";
-	      }
-	      if ( V_.out.size() > 2 && S_.current_ < corpre && S_.current_ > 0 && (round((V_.t_spk + 2.5 * V_.d_dt),6) < round(t_final_time,6))) {
-		if  (debugit(debug, P_.plotit_, t_final_time)) {
-		  std::cout << "2.1 NEW " <<
-		    (V_.out.size() > 2) << " " << S_.current_ << " " << corpre << " " << (S_.current_ > 0) << " " << (round((V_.t_spk + 2.5 * V_.d_dt),6) < round(t_final_time,6) )<< "\n";
-		  std::cout << "2.1 " <<
-		    V_.out.size() << " " << S_.current_ << " " << corpre << " " << S_.current_ << " " << round((V_.t_spk + 2.5 * V_.d_dt),4) << " " << round(t_final_time,4) << "\n";
-		  std::cout << "teta sources " << V_.out[V_.out.size()-1] << " " << (corpre / V_.sc_) << " " << (1/V_.dt-P_.delta1_) << " " << 
-		    V_.out[V_.out.size()-2] << "\n";
+		// Plot VM for debugging latency divergence
+		if (debugit(debug, P_.plotit_, t_final_time)) {
+		  std::cout << std::setprecision(20) << "TAGLIORETTE t_final_time = " << t_final_time << ", t = " << t_final * V_.time_scale_ << ", t_step = " << t_final-t0_val << ", v_ini = " << v_ini * V_.Vconvfact << ", V_m = " << S_.V_m_ << ", Current = " << S_.current_ << "\n";
 		}
-		teta = (V_.out[V_.out.size()-1] / (corpre / V_.sc_)) * (1/V_.dt-P_.delta1_)
-		  -(V_.out[V_.out.size()-2] / ((corpre / V_.sc_)*V_.dt))
-		  -P_.delta1_ / (corpre / V_.sc_) -1;
-		if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "Teta = " << teta << "\n";}
-		if (teta < 0) {
-		  if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "2.1.1\n";}
-		  teta = 0;
-		}
-		S_.Idep_ini_ = S_.Iadap_ini_ + teta * (S_.current_/ V_.sc_) / P_.bet_;
-		v_ini = migliV(local_time_step, P_.delta1_, V_.psi1,
-			       S_.current_/V_.sc_, P_.bet_,
-			       S_.Iadap_ini_, S_.Idep_ini_,
-			       v_ini, S_.r_ref_, V_.vrm);
-		S_.Iadap_ini_ = Iadap(local_time_step, P_.delta1_, V_.psi1,
-				      S_.current_ / V_.sc_, P_.bet_, S_.Iadap_ini_,
-				      S_.Idep_ini_, v_ini, S_.r_ref_);
-		S_.Idep_ini_ = Idep(local_time_step, P_.bet_, S_.Idep_ini_, S_.r_ref_);
 	      } else {
-		if  (debugit(debug, P_.plotit_, t_final_time)) {
-		  std::cout << "2.2 NEW " <<
-		    (V_.out.size() > 2) << " " << S_.current_ << " " << corpre << " " << (S_.current_ > 0) << " " << (round((V_.t_spk + 2.5 * V_.d_dt),6) < round(t_final_time,6) )<< "\n";
-		  std::cout << "2.2 " <<
-		    V_.out.size() << " " << S_.current_ << " " << corpre << " " << S_.current_ << " " << round((V_.t_spk + 2.5 * V_.d_dt),4) << " " << round(t_final_time,4) << "\n";
-		  std::cout << "teta sources " << V_.out[V_.out.size()-1] << " " << (corpre / V_.sc_) << " " << (1/V_.dt-P_.delta1_) << " " << 
-		    V_.out[V_.out.size()-2] << "\n";
-		}
-		if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "2.2\n";}
-		if (S_.current_ > 0) {
+	      if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "NO TAGLIORETTE\n";}
+	      vini_prec = v_ini;
+	      if ((S_.current_ < V_.I_th_ && S_.current_ >= 0) || S_.sis_ == 0)
+		{
+		  if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "1\n";}
+		  v_ini = default_v_ini(S_.current_, P_.eta_, 0 );
+		} else
+		{
 		  if  (debugit(debug, P_.plotit_, t_final_time)) {
-		    std::cout << "2.2.1\n";
+		    std::cout << "2\n";
 		    std::cout << "Evolve t_final_time = " << t_final_time << " " << local_time_step << " " << P_.delta1_ << " " << V_.psi1 << " " << 
 		      S_.current_/V_.sc_ << " " << P_.bet_ << " " << 
 		      S_.Iadap_ini_ << " " << S_.Idep_ini_ << " " << 
 		      v_ini << " " << S_.r_ref_ << " " << V_.vrm << "\n";
 		  }
+		  if ( V_.out.size() > 2 && S_.current_ < corpre && S_.current_ > 0 && (round((V_.t_spk + 2.5 * V_.d_dt),6) < round(t_final_time,6))) {
+		    if  (debugit(debug, P_.plotit_, t_final_time)) {
+		      std::cout << "2.1 NEW " <<
+			(V_.out.size() > 2) << " " << S_.current_ << " " << corpre << " " << (S_.current_ > 0) << " " << (round((V_.t_spk + 2.5 * V_.d_dt),6) < round(t_final_time,6) )<< "\n";
+		      std::cout << "2.1 " <<
+			V_.out.size() << " " << S_.current_ << " " << corpre << " " << S_.current_ << " " << round((V_.t_spk + 2.5 * V_.d_dt),4) << " " << round(t_final_time,4) << "\n";
+		      std::cout << "teta sources " << V_.out[V_.out.size()-1] << " " << (corpre / V_.sc_) << " " << (1/V_.dt-P_.delta1_) << " " << 
+			V_.out[V_.out.size()-2] << "\n";
+		    }
+		    teta = (V_.out[V_.out.size()-1] / (corpre / V_.sc_)) * (1/V_.dt-P_.delta1_)
+		      -(V_.out[V_.out.size()-2] / ((corpre / V_.sc_)*V_.dt))
+		      -P_.delta1_ / (corpre / V_.sc_) -1;
+		    if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "Teta = " << teta << "\n";}
+		    if (teta < 0) {
+		      if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "2.1.1\n";}
+		      teta = 0;
+		    }
+		    S_.Idep_ini_ = S_.Iadap_ini_ + teta * (S_.current_/ V_.sc_) / P_.bet_;
+		    v_ini = migliV(local_time_step, P_.delta1_, V_.psi1,
+				   S_.current_/V_.sc_, P_.bet_,
+				   S_.Iadap_ini_, S_.Idep_ini_,
+				   v_ini, S_.r_ref_, V_.vrm);
+		    S_.Iadap_ini_ = Iadap(local_time_step, P_.delta1_, V_.psi1,
+					  S_.current_ / V_.sc_, P_.bet_, S_.Iadap_ini_,
+					  S_.Idep_ini_, v_ini, S_.r_ref_);
+		    S_.Idep_ini_ = Idep(local_time_step, P_.bet_, S_.Idep_ini_, S_.r_ref_);
+		  } else {
+		    if  (debugit(debug, P_.plotit_, t_final_time)) {
+		      std::cout << "2.2 NEW " <<
+			(V_.out.size() > 2) << " " << S_.current_ << " " << corpre << " " << (S_.current_ > 0) << " " << (round((V_.t_spk + 2.5 * V_.d_dt),6) < round(t_final_time,6) )<< "\n";
+		      std::cout << "2.2 " <<
+			V_.out.size() << " " << S_.current_ << " " << corpre << " " << S_.current_ << " " << round((V_.t_spk + 2.5 * V_.d_dt),4) << " " << round(t_final_time,4) << "\n";
+		      std::cout << "teta sources " << V_.out[V_.out.size()-1] << " " << (corpre / V_.sc_) << " " << (1/V_.dt-P_.delta1_) << " " << 
+			V_.out[V_.out.size()-2] << "\n";
+		    }
+		    if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "2.2\n";}
+		    if (S_.current_ > 0) {
+		      if  (debugit(debug, P_.plotit_, t_final_time)) {
+			std::cout << "2.2.1\n";
+			std::cout << "Evolve t_final_time = " << t_final_time << " " << local_time_step << " " << P_.delta1_ << " " << V_.psi1 << " " << 
+			  S_.current_/V_.sc_ << " " << P_.bet_ << " " << 
+			  S_.Iadap_ini_ << " " << S_.Idep_ini_ << " " << 
+			  v_ini << " " << S_.r_ref_ << " " << V_.vrm << "\n";
+		      }
 		  
-		  v_ini = migliV(local_time_step, P_.delta1_, V_.psi1,
-				 S_.current_/V_.sc_, P_.bet_,
-				 S_.Iadap_ini_, S_.Idep_ini_,
-				 v_ini, S_.r_ref_, V_.vrm);
-		  S_.Iadap_ini_ = Iadap(local_time_step, P_.delta1_, V_.psi1,
-					S_.current_ / V_.sc_, P_.bet_, S_.Iadap_ini_,
-					S_.Idep_ini_, v_ini, S_.r_ref_);
-		  S_.Idep_ini_ = Idep(local_time_step, P_.bet_, S_.Idep_ini_, S_.r_ref_);
+		      v_ini = migliV(local_time_step, P_.delta1_, V_.psi1,
+				     S_.current_/V_.sc_, P_.bet_,
+				     S_.Iadap_ini_, S_.Idep_ini_,
+				     v_ini, S_.r_ref_, V_.vrm);
+		      if  (debugit(debug, P_.plotit_, t_final_time)) {
+			std::cout << "2.2.2\n";
+			std::cout << "Evolve t_final_time = " << t_final_time << " " << local_time_step << " " << P_.delta1_ << " " << V_.psi1 << " " << 
+			  S_.current_/V_.sc_ << " " << P_.bet_ << " " << 
+			  S_.Iadap_ini_ << " " << S_.Idep_ini_ << " " << 
+			  v_ini << " " << S_.r_ref_ << " " << V_.vrm << "\n";
+		      }
+		      S_.Iadap_ini_ = Iadap(local_time_step, P_.delta1_, V_.psi1,
+					    S_.current_ / V_.sc_, P_.bet_, S_.Iadap_ini_,
+					    S_.Idep_ini_, v_ini, S_.r_ref_);
+		      S_.Idep_ini_ = Idep(local_time_step, P_.bet_, S_.Idep_ini_, S_.r_ref_);
+		    }
+		  }
+		  if (corpre != S_.current_ && (S_.current_ < 0 && S_.current_ > P_.mincurr_))
+		    {
+		      if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "2.3\n";}
+		      v_ini = set_v_ini(vini_prec, S_.r_ref_, V_.vrm);
+		    }
+		  if (S_.current_ < 0 && S_.current_ > P_.mincurr_)
+		    {
+		      if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "2.4\n";}
+		      v_ini = default_v_ini(S_.current_, P_.csi_, 0 );
+		    }
+		  if (corpre != S_.current_  && S_.current_ <= P_.mincurr_){
+		    if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "2.5\n";}
+		    S_.Iadap_ini_ = -P_.V_min_ / P_.E_L_ + 1;
+		    S_.Idep_ini_ = 0;
+		    v_ini = default_v_ini(S_.current_, P_.csi_, 0 );
+		  }
+		  if (S_.current_ <= P_.mincurr_) {
+		    if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "2.6\n";}
+		    v_ini = V_.V_star_min_;
+		  }
+		}
+	      if (v_ini * V_.Vconvfact < P_.V_min_){
+		if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "3\n";}
+		v_ini = P_.V_min_ / V_.Vconvfact;
+		S_.Iadap_ini_ = P_.Iadap_start_;
 	      }
-	    }
-	    if (corpre != S_.current_ && (S_.current_ < 0 && S_.current_ > P_.mincurr_))
-	      {
-		if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "2.3\n";}
-		v_ini = set_v_ini(vini_prec, S_.r_ref_, V_.vrm);
+
+
+	      // Count down for refractory period
+	      // if (S_.r_ref_ > 0) {
+	      //   if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "4\n";}
+	      //   --S_.r_ref_;
+	      // }
+
+	      if (S_.current_ > V_.I_th_) {
+		if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "5\n";}
+		if (corpre < V_.I_th_) {
+		  if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "5.1\n";}
+		  V_.blockActive = false;
+
+		  S_.init_sign_ = t_final_time;
+		  S_.Idep_ini_ = std::max(P_.Idep_ini_vr_, P_.cost_idep_ini_*(S_.current_ - V_.I_th_));
+		  S_.Iadap_ini_ = 0;                
+		  v_ini = default_v_ini(S_.current_, P_.zeta_, P_.rho_ );
+		  if (corpre<1e-11) {
+		    if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "5.1.1\n";}
+		    v_ini = -1;
+		  }
+		}
 	      }
-	    if (S_.current_ < 0 && S_.current_ > P_.mincurr_)
-	      {
-		if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "2.4\n";}
-		v_ini = default_v_ini(S_.current_, P_.csi_, 0 );
+
+	      V_.out.push_back(v_ini);
+	      S_.V_m_ = v_ini * V_.Vconvfact;
+	      while (V_.out.size() > 3)
+		{
+		  if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "6\n";}
+		  V_.out.erase(V_.out.begin());
+		}
+	      // lower bound of membrane potential REMOVED in 041 version
+	      // S_.V_m_ = ( S_.V_m_ < P_.V_min_ ? P_.V_min_ : S_.V_m_ );
+
+	      // Plot VM for debugging latency divergence
+	      if (debugit(debug, P_.plotit_, t_final_time)) {
+		std::cout << std::setprecision(20) << "t_final_time = " << t_final_time << ", t = " << t_final * V_.time_scale_ << ", t_step = " << t_final-t0_val << ", v_ini = " << v_ini * V_.Vconvfact << ", V_m = " << S_.V_m_ << ", Current = " << S_.current_ << "\n\n";
 	      }
-	    if (corpre != S_.current_  && S_.current_ <= P_.mincurr_){
-	      if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "2.5\n";}
-	      S_.Iadap_ini_ = -P_.V_min_ / P_.E_L_ + 1;
-	      S_.Idep_ini_ = 0;
-	      v_ini = default_v_ini(S_.current_, P_.csi_, 0 );
+
+	      // threshold crossing
+	      if ( S_.V_m_ >= P_.V_th_ )
+		{
+		  if (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "7\n";}
+		  // S_.V_m_ = P_.V_th_; This is for output graphic so that alla spikes have the same height ASK MICHELE!!!
+		  // voltage logging
+		  B_.logger_.record_data( origin.get_steps() + lag );
+
+		  S_.r_ref_ = V_.RefractoryCounts_; // Inizialize refractory
+
+		  V_.t_spk = t_final_time;
+		  S_.V_m_ = P_.Vres_; // -65
+		  v_ini = V_.vrm;
+
+		  V_.blockActive = true;
+	    
+		  c_aux = P_.c_;
+		  if (S_.current_ < P_.istim_min_spikinig_exp_ || S_.current_ > P_.istim_max_spikinig_exp_)
+		    {
+		      if (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "Iadap " << S_.Iadap_ini_ << " 7.1\n";}
+		      c_aux = P_.c_;
+		      if (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "Monod " << t_final_time << " " << S_.init_sign_ << " " << (t_final_time - S_.init_sign_) << " " << P_.a_ << " " << P_.b_ * S_.current_/1000 << " " << P_.c_ << " " << P_.alp_ << "\n";}
+		      S_.Iadap_ini_ = monod((t_final_time - S_.init_sign_),
+					    P_.a_, P_.b_ * S_.current_/1000, P_.c_, P_.alp_);
+		      if (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "Iadap " << S_.Iadap_ini_ << " 7.1.1\n";}
+		    } else {
+		    // orig parameters
+		    if (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "Iadap " << S_.Iadap_ini_ << " 7.2\n";}
+		    S_.Iadap_ini_ = monod((t_final_time - S_.init_sign_), P_.a_, P_.b_ * S_.current_ / 1000, P_.c_, P_.alp_);
+		    if (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "Iadap " << S_.Iadap_ini_ << " 7.2.1\n";}
+		    // print('Iadap_ini: ',Iadap_ini)
+		    if (S_.Iadap_ini_<0) {
+		      // print('monod negativa')
+		      //sinapt
+		      if (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "Iadap " << S_.Iadap_ini_ << " 7.3\n";}
+		      paramL_ = S_.Iadap_ini_;
+		      if (P_.a_ > 0) {
+			c_aux = P_.c_ - paramL_;
+			if (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "c_aux " << c_aux << " 7.3.1\n";}
+		      } else {
+			c_aux = -P_.a_ * exp(P_.b_ * S_.current_ / 1000);
+			if (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "c_aux " << c_aux << " 7.3.2\n";}
+		      }
+		      S_.Iadap_ini_ = monod((t_final_time - S_.init_sign_), P_.a_, P_.b_ * S_.current_/1000, c_aux, P_.alp_);
+		      if (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "Iadap " << S_.Iadap_ini_ << " 7.3.3\n";}
+		    }
+		  }
+			  
+		  if (S_.current_ < V_.I_th_) {
+		    if (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "Iadap " << S_.Iadap_ini_ << " 7.4\n";}
+		    S_.Idep_ini_ = 0;
+		    S_.Iadap_ini_ = P_.Iadap_start_;
+		    if (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "Iadap " << S_.Iadap_ini_ << " 7.3\n";}
+		  } else {
+		    S_.Idep_ini_ = P_.Idep_ini_vr_;
+		  }
+
+		  // compute spike time
+		  set_spiketime( Time::step( origin.get_steps() + lag + 1 ) );
+
+		  SpikeEvent se;
+		  kernel().event_delivery_manager.send( *this, se, lag );
+		}
+	      else
+		{
+		  // voltage logging
+		  B_.logger_.record_data( origin.get_steps() + lag );
+		}
 	    }
-	    if (S_.current_ <= P_.mincurr_) {
-		if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "2.6\n";}
-	      v_ini = V_.V_star_min_;
-	    }
-	  }
-	  if (v_ini * V_.Vconvfact < P_.V_min_){
-	    if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "3\n";}
-	    v_ini = P_.V_min_ / V_.Vconvfact;
-	    S_.Iadap_ini_ = P_.Iadap_start_;
-	  }
-
-
-	// Count down for refractory period
-	if (S_.r_ref_ > 0) {
-	  if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "4\n";}
-	  --S_.r_ref_;
-	}
-
-	if (S_.current_ > V_.I_th_) {
-	  if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "5\n";}
-	  if (corpre < V_.I_th_) {
-	    if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "5.1\n";}
-	    V_.blockActive = false;
-
-	    S_.init_sign_ = t_final_time;
-	    S_.Idep_ini_ = std::max(P_.Idep_ini_vr_, P_.cost_idep_ini_*(S_.current_ - V_.I_th_));
-	    S_.Iadap_ini_ = 0;                
-	    v_ini = default_v_ini(S_.current_, P_.zeta_, P_.rho_ );
-	    if (S_.current_<1e-11) {
-	      if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "5.1.1\n";}
-	      v_ini = -1;
-	    }
-	  }
-	}
-
-	V_.out.push_back(v_ini);
-	S_.V_m_ = v_ini * V_.Vconvfact;
-	while (V_.out.size() > 3)
+	  } else
 	  {
-	    if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "6\n";}
-	    V_.out.erase(V_.out.begin());
-	  }
-	// lower bound of membrane potential REMOVED in 041 version
-	// S_.V_m_ = ( S_.V_m_ < P_.V_min_ ? P_.V_min_ : S_.V_m_ );
-
-	// Plot VM for debugging latency divergence
-	if (debugit(debug, P_.plotit_, t_final_time)) {
-	    std::cout << std::setprecision(20) << "t_final_time = " << t_final_time << ", t = " << t_final * V_.time_scale_ << ", t_step = " << t_final-t0_val << ", v_ini = " << v_ini * V_.Vconvfact << ", V_m = " << S_.V_m_ << ", Current = " << S_.current_ << "\n\n";
-	}
-
-	// threshold crossing
-	if ( S_.V_m_ >= P_.V_th_ )
-	  {
-	    if (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "7\n";}
-	    // S_.V_m_ = P_.V_th_; This is for output graphic so that alla spikes have the same height ASK MICHELE!!!
+	    --S_.r_ref_;
+	    V_.out.push_back(v_ini);
+	    S_.V_m_ = v_ini * V_.Vconvfact;
+	    while (V_.out.size() > 3)
+	      {
+		if  (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "6\n";}
+		V_.out.erase(V_.out.begin());
+	      }
 	    // voltage logging
 	    B_.logger_.record_data( origin.get_steps() + lag );
-
-	    S_.r_ref_ = V_.RefractoryCounts_; // Inizialize refractory
-
-	    V_.t_spk = t_final_time;
-	    S_.V_m_ = P_.Vres_; // -65
-	    v_ini = V_.vrm;
-
-	    V_.blockActive = true;
-	    
-	    c_aux = P_.c_;
-	    if (S_.current_ < P_.istim_min_spikinig_exp_ || S_.current_ > P_.istim_max_spikinig_exp_)
-	      {
-		if (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "Iadap " << S_.Iadap_ini_ << " 7.1\n";}
-		c_aux = P_.c_;
-		if (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "Monod " << t_final_time << " " << S_.init_sign_ << " " << (t_final_time - S_.init_sign_) << " " << P_.a_ << " " << P_.b_ * S_.current_/1000 << " " << P_.c_ << " " << P_.alp_ << "\n";}
-		S_.Iadap_ini_ = monod((t_final_time - S_.init_sign_),
-				      P_.a_, P_.b_ * S_.current_/1000, P_.c_, P_.alp_);
-		if (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "Iadap " << S_.Iadap_ini_ << " 7.1.1\n";}
-	      } else {
-	      // orig parameters
-	      if (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "Iadap " << S_.Iadap_ini_ << " 7.2\n";}
-	      S_.Iadap_ini_ = monod((t_final_time - S_.init_sign_), P_.a_, P_.b_ * S_.current_ / 1000, P_.c_, P_.alp_);
-	      if (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "Iadap " << S_.Iadap_ini_ << " 7.2.1\n";}
-	      // print('Iadap_ini: ',Iadap_ini)
-	      if (S_.Iadap_ini_<0) {
-		// print('monod negativa')
-		//sinapt
-		if (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "Iadap " << S_.Iadap_ini_ << " 7.3\n";}
-		paramL_ = S_.Iadap_ini_;
-		if (P_.a_ > 0) {
-		  c_aux = P_.c_ - paramL_;
-		  if (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "c_aux " << c_aux << " 7.3.1\n";}
-		} else {
-		  c_aux = -P_.a_ * exp(P_.b_ * S_.current_ / 1000);
-		  if (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "c_aux " << c_aux << " 7.3.2\n";}
-		}
-		S_.Iadap_ini_ = monod((t_final_time - S_.init_sign_), P_.a_, P_.b_ * S_.current_/1000, c_aux, P_.alp_);
-		if (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "Iadap " << S_.Iadap_ini_ << " 7.3.3\n";}
-	      }
-	    }
-			  
-	    if (S_.current_ < V_.I_th_) {
-	      if (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "Iadap " << S_.Iadap_ini_ << " 7.4\n";}
-	      S_.Idep_ini_ = 0;
-	      S_.Iadap_ini_ = P_.Iadap_start_;
-	      if (debugit(debug, P_.plotit_, t_final_time)) {std::cout << "Iadap " << S_.Iadap_ini_ << " 7.3\n";}
-	    } else {
-	      S_.Idep_ini_ = P_.Idep_ini_vr_;
-	    }
-
-	    // compute spike time
-	    set_spiketime( Time::step( origin.get_steps() + lag + 1 ) );
-
-	    SpikeEvent se;
-	    kernel().event_delivery_manager.send( *this, se, lag );
+	    vini_prec = v_ini;
 	  }
-	else
-	  {
-	  // voltage logging
-	  B_.logger_.record_data( origin.get_steps() + lag );
-	  }
-	}
 	t0_val = t_final;
 	t_final = t0_val + local_time_step;
 	t_final_time = t_final_time + V_.d_dt;
